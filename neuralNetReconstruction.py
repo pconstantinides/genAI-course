@@ -29,22 +29,20 @@ def train(dataset, model, optimizer, args):
         
         xyz_tensor = data['xyz'].to(device) # convert to tensor
         pred_sdf_tensor = model(xyz_tensor) # forward pass
+        gt_sdf_tensor = data['gt_sdf'].to(device)
         
-        ##########################################################
-        # <================START MODIFYING CODE<================>
-        ##########################################################       
-        # **** YOU SHOULD ADD TRAINING CODE FOR THE LOSS HERE, CURRENTLY IT IS INCORRECT ****
-        loss_sum += 1. * xyz_tensor.shape[0]
+        loss = _cost_function(pred_sdf_tensor, gt_sdf_tensor, args)
+        loss_sum += loss.detach().item() * xyz_tensor.shape[0]
         loss_count += xyz_tensor.shape[0]
-        # ***********************************************************************
-        ##########################################################
-        # <================END MODIFYING CODE<================>
-        ##########################################################       
-
+        loss.backward()
         optimizer.step()
 
     return loss_sum / loss_count
 
+def _cost_function(pred_sdf_tensor, sdf_tensor, args):
+    pred_sdf_tensor = torch.clamp(pred_sdf_tensor, -args.clamping_distance, args.clamping_distance)
+    sdf_tensor = torch.clamp(sdf_tensor, -args.clamping_distance, args.clamping_distance)
+    return torch.mean(torch.abs(pred_sdf_tensor - sdf_tensor))
 
 # validation function
 def val(dataset, model, optimizer, args):
@@ -56,20 +54,12 @@ def val(dataset, model, optimizer, args):
         data = dataset[i]  # a dict
         
         xyz_tensor = data['xyz'].to(device)
-        
-        ##########################################################
-        # <================START MODIFYING CODE<================>
-        ##########################################################              
-        # **** YOU SHOULD ADD VALIDATION CODE HERE, CURRENTLY IT IS INCORRECT ****
         with torch.no_grad():
-            xyz_tensor = data['xyz'].to(device)
-            loss_sum += 1. * xyz_tensor.shape[0]
+            pred_sdf_tensor = model(xyz_tensor)
+            loss = _cost_function(pred_sdf_tensor, data['gt_sdf'].to(device), args)
+            loss_sum += loss.detach().item() * xyz_tensor.shape[0]
             loss_count += xyz_tensor.shape[0]
-        # ***********************************************************************
-        ##########################################################
-        # <================END MODIFYING CODE<================>
-        ##########################################################             
- 
+        
     return loss_sum / loss_count
 
 

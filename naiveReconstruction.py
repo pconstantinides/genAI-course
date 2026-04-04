@@ -58,15 +58,17 @@ def naiveReconstruction(points, normals, X, Y, Z):
     # <================START MODIFYING CODE<================>
     ##########################################################
 
-    # replace this random implicit function with your naive surface reconstruction implementation!
-    IF = np.random.rand(X.shape[0], X.shape[1], X.shape[2]) - 0.5
-
-    # this is an example of a kd-tree nearest neighbor search (adapt it accordingly for your task)
-	# use kd-trees to find nearest neighbors efficiently!
-	# kd-tree: https://en.wikipedia.org/wiki/K-d_tree
+    # Evaluate the signed distance to the tangent plane at the nearest surface point.
+    # f(q) = <q - p_nearest, n_nearest>
     Q = np.array([X.reshape(-1), Y.reshape(-1), Z.reshape(-1)]).transpose()
     tree = KDTree(points)
-    _, idx = tree.query(Q, k=2)  
+    _, idx = tree.query(Q, k=1)
+
+    nearest_points = points[idx[:, 0], :]
+    nearest_normals = normals[idx[:, 0], :]
+
+    signed_dist = np.sum((Q - nearest_points) * nearest_normals, axis=1)
+    IF = signed_dist.reshape(X.shape)
 	
     ##########################################################
     # <================END MODIFYING CODE<================>
@@ -89,7 +91,7 @@ if __name__ == '__main__':
     normals = data[:, 3:6] # last 3 entries are normal_x, normal_y, normal_z
 
     # create grid whose vertices will be used to sample the implicit function
-    X,Y,Z,max_dimensions,min_dimensions = createGrid(points, 96)
+    X,Y,Z,max_dimensions,min_dimensions = createGrid(points, 128)
 
     if args.method == 'naive':
         print(f'Running naive reconstruction on {args.file}')
