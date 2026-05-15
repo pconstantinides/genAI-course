@@ -158,7 +158,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--evaluate", action="store_true", help="Activate test mode - Evaluate model on val/test set (no training)")
 
     # paths you may want to adjust
-    parser.add_argument("--input_pts", default="data/bunny-1000.pts", type=str, help="Input point cloud")
+    parser.add_argument("--input_pts", default="data/bunny-500.pts", type=str, help="Input point cloud")
     parser.add_argument("--checkpoint_folder", default="checkpoints/", type=str, help="Folder to save checkpoints")
     parser.add_argument("--resume_file", default="model_best.pth.tar", type=str, help="Path to retrieve latest checkpoint file relative to checkpoint folder")
 

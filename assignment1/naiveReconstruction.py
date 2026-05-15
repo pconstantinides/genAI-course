@@ -80,7 +80,7 @@ def naiveReconstruction(points, normals, X, Y, Z):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Naive surface reconstruction')
-    parser.add_argument('--file', type=str, default = "data/bunny-500.pts", help='input point cloud filename')
+    parser.add_argument('--file', type=str, default = "data/sphere.pts", help='input point cloud filename')
     parser.add_argument('--method', type=str, default = "naive",\
                         help='method to use: naive (naive reconstruction), sphere (just shows a sphere)')
     args = parser.parse_args()
