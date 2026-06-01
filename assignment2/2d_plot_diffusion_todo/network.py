@@ -70,7 +70,6 @@ class SimpleNet(nn.Module):
     def __init__(
         self, dim_in: int, dim_out: int, dim_hids: List[int], num_timesteps: int
     ):
-        super().__init__()
         """
         Build a noise estimating network.
 
@@ -80,11 +79,16 @@ class SimpleNet(nn.Module):
             dim_hids: dimensions of hidden features
             num_timesteps: number of timesteps
         """
-
-        ######## TODO ########
-        # Assignment -- implement the denoiser model
-
-        ######################
+        super().__init__()
+        dims = [dim_in] + dim_hids + [dim_out]
+        self.layers = nn.ModuleList()
+        self.activations = nn.ModuleList()
+        
+        for i in range(len(dims) - 1):
+            self.layers.append(TimeLinear(dims[i], dims[i+1], num_timesteps))
+            
+            if i < len(dims) - 2:
+                self.activations.append(nn.ReLU())
         
     def forward(self, x: torch.Tensor, t: torch.Tensor):
         """
@@ -95,8 +99,10 @@ class SimpleNet(nn.Module):
             x: the noisy data after t period diffusion
             t: the time that the forward diffusion has been running
         """
-        ######## TODO ########
-        # Assignment -- implement the forward pass of the denoiser
-
-        ######################
+        # Apply every layer; apply activation after each layer except the final one.
+        for i, layer in enumerate(self.layers):
+            x = layer(x, t)
+            if i < len(self.layers) - 1:
+                # there is one fewer activation than layers
+                x = self.activations[i](x)
         return x

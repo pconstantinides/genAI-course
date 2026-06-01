@@ -5,6 +5,8 @@ import torch.nn.functional as F
 
 
 def extract(input, t: torch.Tensor, x: torch.Tensor):
+    '''Extract values from a 1-D tensor for a batch of indices.'''
+    
     if t.ndim == 0:
         t = t.unsqueeze(0)
     shape = x.shape
@@ -25,7 +27,7 @@ class BaseScheduler(nn.Module):
         beta_1: float = 1e-4,
         beta_T: float = 0.02,
         mode: str = "linear",
-    ):
+    ) -> None:
         super().__init__()
         self.num_train_timesteps = num_train_timesteps
         self.timesteps = torch.from_numpy(
@@ -83,40 +85,40 @@ class DiffusionModule(nn.Module):
         if noise is None:
             noise = torch.randn_like(x0)
 
-        ######## TODO ########
-        # Assignment -- Compute xt.
         alphas_prod_t = extract(self.var_scheduler.alphas_cumprod, t, x0)
-        xt = x0
-
-        #######################
-
-        return xt
+        xt = torch.sqrt(alphas_prod_t) * x0 + torch.sqrt(1 - alphas_prod_t) * noise
+        return xt.to(self.device)
 
     @torch.no_grad()
-    def p_sample(self, xt, t):
+    def p_sample(self, xt, t, eta=1.0):
         """
         One step denoising function of DDPM: x_t -> x_{t-1}.
 
         Input:
             xt (`torch.Tensor`): samples at arbitrary timestep t.
             t (`torch.Tensor`): current timestep in a reverse process.
+            eta (`float`): noise multiplier for DDPM sampling.
         Ouptut:
             x_t_prev (`torch.Tensor`): one step denoised sample. (= x_{t-1})
 
         """
-        ######## TODO ########
-        # Assignment -- compute x_t_prev.
         if isinstance(t, int):
             t = torch.tensor([t]).to(self.device)
-        eps_factor = (1 - extract(self.var_scheduler.alphas, t, xt)) / (
+        epsilon_coef = (1 - extract(self.var_scheduler.alphas, t, xt)) / (
             1 - extract(self.var_scheduler.alphas_cumprod, t, xt)
         ).sqrt()
-        eps_theta = self.network(xt, t)
+        epsilon = epsilon_coef * self.network(xt, t)
 
-        x_t_prev = xt
+        if t == 0:
+            sigma = 0.0
+        else:
+            sigma = torch.sqrt(
+                eta * (1 - extract(self.var_scheduler.alphas_cumprod, t-1, xt)) / (1 - extract(self.var_scheduler.alphas_cumprod, t, xt)) * self.var_scheduler.betas[t]                 
+            )
+        perturbation = sigma * torch.randn_like(xt)
 
-        #######################
-        return x_t_prev
+        x_t_prev = (xt - epsilon) / extract(self.var_scheduler.alphas, t, xt).sqrt() + perturbation
+        return x_t_prev.to(self.device)
 
     @torch.no_grad()
     def p_sample_loop(self, shape):
@@ -128,12 +130,10 @@ class DiffusionModule(nn.Module):
         Output:
             x0_pred (`torch.Tensor`): The final denoised output through the DDPM reverse process.
         """
-        ######## TODO ########
-        # Assignment -- sample x0 based on Algorithm 2 of DDPM paper.
-        x0_pred = torch.zeros(shape).to(self.device)
-
-        ######################
-        return x0_pred
+        xt = torch.randn(shape).to(self.device)
+        for t in self.var_scheduler.timesteps:
+            xt = self.p_sample(xt, t)
+        return xt
 
     def compute_loss(self, x0):
         """
@@ -144,8 +144,6 @@ class DiffusionModule(nn.Module):
         Output:
             loss: the computed loss to be backpropagated.
         """
-        ######## TODO ########
-        # Assignment -- compute noise matching loss.
         batch_size = x0.shape[0]
         t = (
             torch.randint(0, self.var_scheduler.num_train_timesteps, size=(batch_size,))
@@ -153,9 +151,9 @@ class DiffusionModule(nn.Module):
             .long()
         )
 
-        loss = x0.mean()
-
-        ######################
+        noise = torch.randn_like(x0)
+        xt = self.q_sample(x0, t, noise)
+        loss = F.mse_loss(self.network(xt, t), noise)
         return loss
 
     def save(self, file_path):
