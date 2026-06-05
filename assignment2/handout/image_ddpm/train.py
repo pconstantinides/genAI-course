@@ -45,7 +45,7 @@ def main(args):
     """config"""
     config = DotMap()
     config.update(vars(args))
-    config.device = f"cuda:{args.gpu}"
+    config.device = 'cpu' if args.gpu == 'cpu' else f"cuda:{int(args.gpu)}"
 
     now = get_current_time()
     if args.use_cfg:
@@ -146,7 +146,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--gpu", type=str, default='0')
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument(
         "--train_num_steps",

@@ -53,7 +53,7 @@ def get_eval_loader(path, img_size, batch_size):
 
     files = listdir(path)
     ds = ImagePathDataset(files, img_size)
-    dl = torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=4)
+    dl = torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=2)
     return dl
 
 def frechet_distance(mu, cov, mu2, cov2):

@@ -93,7 +93,7 @@ class AFHQDataModule(object):
         self,
         root: str = "data",
         batch_size: int = 32,
-        num_workers: int = 4,
+        num_workers: int = 2,
         max_num_images_per_cat: int = 1000,
         image_resolution: int = 64,
         label_offset=1,
