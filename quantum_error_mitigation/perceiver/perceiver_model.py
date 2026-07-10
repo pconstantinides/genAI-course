@@ -33,6 +33,60 @@ import tempfile
 
 
 # ---------------------------------------------------------------------------
+# Device / CPU-thread configuration helpers
+# ---------------------------------------------------------------------------
+
+def configure_cpu_threads(n_threads: int = None) -> int:
+    """
+    Explicitly sets the number of CPU threads PyTorch uses for intra-op
+    parallelism (matmuls, etc). Worth calling explicitly and *verifying* --
+    on some machines/containers PyTorch (or an inherited OMP_NUM_THREADS=1
+    environment variable) ends up using far fewer threads than physically
+    available, silently leaving most of a multi-core CPU idle during
+    training. Returns the thread count actually in effect afterwards.
+    """
+    if n_threads is None:
+        n_threads = os.cpu_count() or 1
+    torch.set_num_threads(n_threads)
+    return torch.get_num_threads()
+
+
+def pick_device(preferred: str = "auto") -> str:
+    """Returns 'cuda' if available and requested/auto, else 'cpu'."""
+    if preferred == "auto":
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    return preferred
+
+
+def recommended_training_config(device: str = "auto") -> dict:
+    """
+    Suggested (batch_size, gradient_accumulation_steps, use_checkpoint,
+    use_amp) starting point for a given device. These are starting points,
+    not hard requirements -- tune batch_size upward on a GPU with more VRAM,
+    or downward if you hit an out-of-memory error.
+
+    Rationale:
+      - CPU, ample RAM (e.g. 16GB): checkpointing trades ~50-60% extra
+        compute for roughly half the peak memory (see Perceiver/
+        train_perceiver docstrings) -- worth it only when RAM, not time, is
+        the binding constraint. With 16GB free, it usually isn't, so this
+        preset turns checkpointing off and raises the batch size instead.
+      - CUDA (e.g. Colab T4, 15GB VRAM): checkpointing is essentially never
+        worth it (VRAM is more comfortable and every recomputation costs
+        wall-clock time you're specifically trying to save); mixed
+        precision (use_amp=True) roughly halves compute time again on
+        tensor-core GPUs with negligible accuracy impact.
+    """
+    device = pick_device(device)
+    if device == "cuda":
+        return dict(batch_size=128, gradient_accumulation_steps=1,
+                    use_checkpoint=False, use_amp=True)
+    else:
+        return dict(batch_size=32, gradient_accumulation_steps=4,
+                    use_checkpoint=False, use_amp=False)
+
+
+# ---------------------------------------------------------------------------
 # Dataset wrapper
 # ---------------------------------------------------------------------------
 
@@ -40,28 +94,66 @@ class QEMDataset(Dataset):
     """
     Wraps circuit (C), backend (B), noisy (Pnoisy) and ideal (Pideal) arrays.
 
-    C:      (N, n_layers, n_qubits, 5)   -- Table 1 gate encoding
-    B:      (N, 101)                     -- Section 2.2 backend calibration
-    Pnoisy: (N, 32)
-    Pideal: (N, 32)
+    Parameters
+    ----------
+    subset_fraction : float, optional
+        Fraction of the dataset to expose. Must lie in (0, 1].
+        If None (default), the full dataset is used.
+
+    seed : int
+        Random seed used when sampling the subset.
     """
 
-    def __init__(self, C, B, Pnoisy, Pideal):
+    def __init__(
+        self,
+        C,
+        B,
+        Pnoisy,
+        Pideal,
+        subset_fraction: float | None = None,
+        seed: int = 0,
+    ):
         self.C = torch.as_tensor(np.asarray(C), dtype=torch.float32)
         self.B = torch.as_tensor(np.asarray(B), dtype=torch.float32)
         self.Pnoisy = torch.as_tensor(np.asarray(Pnoisy), dtype=torch.float32)
         self.Pideal = torch.as_tensor(np.asarray(Pideal), dtype=torch.float32)
+
         self.n_layers = self.C.shape[1]
         self.n_qubits = self.C.shape[2]
 
+        # -------------------------------------------------------
+        # Optional dataset subsampling
+        # -------------------------------------------------------
+        if subset_fraction is None:
+            self.indices = torch.arange(self.C.shape[0])
+
+        else:
+            if not (0 < subset_fraction <= 1):
+                raise ValueError(
+                    "subset_fraction must lie in the interval (0, 1]."
+                )
+
+            rng = np.random.default_rng(seed)
+
+            n_total = self.C.shape[0]
+            n_subset = max(1, int(round(subset_fraction * n_total)))
+
+            self.indices = torch.as_tensor(
+                rng.choice(n_total, size=n_subset, replace=False),
+                dtype=torch.long,
+            )
+
     def __len__(self):
-        return self.C.shape[0]
+        return len(self.indices)
 
     def __getitem__(self, idx):
-        c = self.C[idx].reshape(self.n_layers, -1)  # (nl, n_qubits*5)
+        idx = self.indices[idx]
+
+        c = self.C[idx].reshape(self.n_layers, -1)
         b = self.B[idx]
         pnoisy = self.Pnoisy[idx]
         pideal = self.Pideal[idx]
+
         return c, b, pnoisy, pideal
 
 
@@ -355,6 +447,7 @@ def train_perceiver(
     patience: int = 10,
     gradient_accumulation_steps: int = 1,
     checkpoint_to_disk: bool = True,
+    use_amp: bool = False,
 ):
     """
     Trains with the KL-divergence loss (Eq. 20 / Section 3.2), AdamW,
@@ -375,8 +468,27 @@ def train_perceiver(
         written to a temporary file on disk and reloaded at the end,
         instead of being kept as a second full copy of the model's
         `state_dict()` in RAM for the whole training run.
+
+    Speed note:
+      - `use_amp`: enables mixed-precision training via torch.autocast.
+        On CUDA this uses float16 with gradient scaling (typically ~1.5-2x
+        faster on tensor-core GPUs, negligible accuracy impact for this
+        model/loss). On CPU it uses bfloat16 without gradient scaling
+        (bfloat16 has the same exponent range as float32, so scaling isn't
+        needed) -- CPU speedups from this are hardware-dependent and can be
+        small or even negative on CPUs without native bf16 support, so
+        benchmark before relying on it there. Disabled (False) by default
+        since it is a numerical-precision trade-off, not a pure
+        implementation optimization like the other flags in this function.
     """
     model.to(device)
+    device_type = "cuda" if str(device).startswith("cuda") else "cpu"
+    amp_dtype = torch.float16 if device_type == "cuda" else torch.bfloat16
+    # GradScaler is only meaningful (and only actually enabled) for the
+    # CUDA + float16 combination; with enabled=False it is a transparent
+    # pass-through, so it is safe to construct unconditionally.
+    scaler = torch.amp.GradScaler(device_type, enabled=(use_amp and device_type == "cuda"))
+
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, factor=0.5)
     kldiv = nn.KLDivLoss(reduction="batchmean")
@@ -392,19 +504,21 @@ def train_perceiver(
         tmp.close()
 
     try:
-        for epoch in tqdm(range(epochs), desc="Training Perceiver", unit="epoch"):
+        for epoch in tqdm(range(epochs), desc="Epochs"):
             model.train()
             optimizer.zero_grad()
             n_batches = len(train_loader)
             for step, (x_in, _pnoisy, pideal) in enumerate(train_loader):
                 x_in, pideal = x_in.to(device), pideal.to(device)
-                log_pmit = model(x_in)
-                loss = kldiv(log_pmit, pideal.clamp_min(1e-12)) / gradient_accumulation_steps
-                loss.backward()
+                with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
+                    log_pmit = model(x_in)
+                    loss = kldiv(log_pmit, pideal.clamp_min(1e-12)) / gradient_accumulation_steps
+                scaler.scale(loss).backward()
 
                 is_last_batch = (step == n_batches - 1)
                 if (step + 1) % gradient_accumulation_steps == 0 or is_last_batch:
-                    optimizer.step()
+                    scaler.step(optimizer)
+                    scaler.update()
                     optimizer.zero_grad()
 
             model.eval()
@@ -412,8 +526,9 @@ def train_perceiver(
             with torch.inference_mode():
                 for x_in, _pnoisy, pideal in val_loader:
                     x_in, pideal = x_in.to(device), pideal.to(device)
-                    log_pmit = model(x_in)
-                    val_losses.append(kldiv(log_pmit, pideal.clamp_min(1e-12)).item())
+                    with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
+                        log_pmit = model(x_in)
+                        val_losses.append(kldiv(log_pmit, pideal.clamp_min(1e-12)).item())
             val_loss = float(np.mean(val_losses)) if val_losses else 0.0
             scheduler.step(val_loss)
 
@@ -445,9 +560,11 @@ def train_perceiver(
     return model
 
 
-def evaluate_l1rc(model: Perceiver, loader: DataLoader, device: str = "cpu") -> np.ndarray:
+def evaluate_l1rc(model: Perceiver, loader: DataLoader, device: str = "cpu", use_amp: bool = False) -> np.ndarray:
     """Runs the model on `loader` and returns the L1 Relative Change per circuit."""
     model.eval()
+    device_type = "cuda" if str(device).startswith("cuda") else "cpu"
+    amp_dtype = torch.float16 if device_type == "cuda" else torch.bfloat16
     all_rc = []
     # inference_mode is a strict superset of no_grad's savings: it also
     # skips PyTorch's autograd view/version-counter bookkeeping, at no cost
@@ -455,7 +572,12 @@ def evaluate_l1rc(model: Perceiver, loader: DataLoader, device: str = "cpu") -> 
     with torch.inference_mode():
         for x_in, pnoisy, pideal in loader:
             x_in = x_in.to(device)
-            pmit = model(x_in).exp().cpu().numpy()
+            with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
+                pmit = model(x_in).exp()
+            # .numpy() does not support bfloat16/float16 tensors directly;
+            # cast back to float32 first. This happens after the
+            # compute-heavy forward pass, so it costs nothing meaningful.
+            pmit = pmit.float().cpu().numpy()
             rc = l1_relative_change(pmit, pideal.numpy(), pnoisy.numpy())
             all_rc.append(rc)
             del x_in, pmit
@@ -470,14 +592,17 @@ def reproduce_figure_6a(
     npz_path: str = "pauli_simulated_dataset.npz",
     feature_dim: int = 132,
     epochs: int = 50,
-    batch_size: int = 16,
-    gradient_accumulation_steps: int = 8,
-    device: str = "cpu",
+    batch_size: int = None,
+    gradient_accumulation_steps: int = None,
+    device: str = "auto",
     seed: int = 0,
     save_path: str = "figure_6a_perceiver.png",
-    use_checkpoint: bool = True,
+    use_checkpoint: bool = None,
+    use_amp: bool = None,
     checkpoint_to_disk: bool = True,
     lazy_dataset_dir: str = None,
+    num_workers: int = 0,
+    n_cpu_threads: int = None,
 ):
     """
     Reproduces the PERCEIVER result of Figure 6a: "Trained on Algiers Pauli
@@ -496,16 +621,43 @@ def reproduce_figure_6a(
          and render it as a box plot (whiskers at 1st-99th percentile),
          matching the styling of Figure 6a.
 
-    Memory-conscious defaults (see Perceiver/train_perceiver docstrings for
-    why each is safe -- none of them change the model's outputs):
-      - batch_size=16 with gradient_accumulation_steps=8 gives the same
-        effective batch size (128) as the original defaults, at roughly
-        1/8th the peak activation memory per step.
-      - use_checkpoint=True enables gradient checkpointing in the Perceiver.
-      - checkpoint_to_disk=True avoids keeping a second full copy of the
-        model in RAM for early stopping.
+    Device handling:
+      `device="auto"` (default) picks CUDA if available, else CPU. Any of
+      `batch_size`, `gradient_accumulation_steps`, `use_checkpoint`, `use_amp`
+      left as None are filled in from `recommended_training_config(device)`
+      -- memory-conservative + checkpointed on CPU, larger-batch +
+      mixed-precision + uncheckpointed on CUDA (see that function's
+      docstring for the reasoning). Pass explicit values to override any of
+      these, e.g. to reduce batch_size further if you hit an OOM, or to
+      re-enable checkpointing on a more memory-constrained CPU machine.
+
+    `n_cpu_threads`: if set, calls `configure_cpu_threads(n_cpu_threads)`
+    before training. Worth setting explicitly to your physical core count
+    on CPU-only machines -- some environments leave PyTorch using far fewer
+    threads than are actually available (call
+    `torch.get_num_threads()` to check first).
     """
     torch.manual_seed(seed)
+    device = pick_device(device)
+
+    if n_cpu_threads is not None and device == "cpu":
+        actual = configure_cpu_threads(n_cpu_threads)
+        print(f"Configured {actual} CPU thread(s) for PyTorch "
+              f"(torch.get_num_threads() now reports {torch.get_num_threads()})")
+
+    defaults = recommended_training_config(device)
+    if batch_size is None:
+        batch_size = defaults["batch_size"]
+    if gradient_accumulation_steps is None:
+        gradient_accumulation_steps = defaults["gradient_accumulation_steps"]
+    if use_checkpoint is None:
+        use_checkpoint = defaults["use_checkpoint"]
+    if use_amp is None:
+        use_amp = defaults["use_amp"]
+
+    print(f"Device={device}  batch_size={batch_size}  "
+          f"gradient_accumulation_steps={gradient_accumulation_steps}  "
+          f"use_checkpoint={use_checkpoint}  use_amp={use_amp}")
 
     if lazy_dataset_dir is not None:
         full_ds = LazyQEMDataset(lazy_dataset_dir)
@@ -513,7 +665,7 @@ def reproduce_figure_6a(
     else:
         data = np.load(npz_path)
         C, B, Pnoisy, Pideal = data["C"], data["B"], data["Pnoisy"], data["Pideal"]
-        full_ds = QEMDataset(C, B, Pnoisy, Pideal)
+        full_ds = QEMDataset(C, B, Pnoisy, Pideal, subset_fraction=0.1, seed=seed)
         n_outcomes = Pnoisy.shape[-1]
 
     n = len(full_ds)
@@ -525,10 +677,13 @@ def reproduce_figure_6a(
         generator=torch.Generator().manual_seed(seed),
     )
 
+    pin_memory = (device == "cuda")
+
     def make_loader(ds, shuffle):
         return DataLoader(
             ds, batch_size=batch_size, shuffle=shuffle,
             collate_fn=lambda b: collate_batch(b, feature_dim=feature_dim),
+            num_workers=num_workers, pin_memory=pin_memory,
         )
 
     train_loader = make_loader(train_ds, True)
@@ -546,8 +701,9 @@ def reproduce_figure_6a(
         model, train_loader, val_loader, epochs=epochs, device=device,
         gradient_accumulation_steps=gradient_accumulation_steps,
         checkpoint_to_disk=checkpoint_to_disk,
+        use_amp=use_amp,
     )
-    rc = evaluate_l1rc(model, test_loader, device=device)
+    rc = evaluate_l1rc(model, test_loader, device=device, use_amp=use_amp)
 
     median = float(np.median(rc))
     pct_improved = 100.0 * float(np.mean(rc < 0))
