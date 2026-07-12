@@ -19,6 +19,7 @@ interest (Original vs. full Dual-State).
 
 import time
 from dataclasses import dataclass, field
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -196,7 +197,7 @@ def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_si
     rng = np.random.default_rng(seed)
 
     final_loss = None
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs), desc="Training"):
         perm = rng.permutation(len(train_seqs))
         total_loss, total_count = 0.0, 0
         for start in range(0, len(train_seqs), batch_size):

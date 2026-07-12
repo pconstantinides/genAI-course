@@ -26,12 +26,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from coherent_noise_dataset import generate_coherent_dataset, CONDITIONS
+from coherent_noise_dataset import generate_coherent_dataset, CONDITIONS, CoherentSequence
 from train_nnas import (
     build_model, train_model, evaluate_model, ARCHITECTURES,
     N_QUBITS, FIXED_L, PARTIAL_TRAINING_RATE, BATCH_SIZE,
     save_model, load_model, load_model_metadata,
 )
+
+import __main__ # fix the unpickling issue
+__main__.CoherentSequence = CoherentSequence
 
 # ---- "at scale" experiment configuration (tune to your compute budget) ----
 N_TRAIN = 80
@@ -69,7 +72,7 @@ def run_all(use_existing_datasets=True, reuse_existing_models=True, save_models=
     for condition in CONDITIONS:
         print(f"\n=== {condition} ===")
         train_dataset_path = DATASET_DIR / f"{condition}_train_20000_23.npy" #_dataset_path(condition, "train", N_TRAIN, 1000)
-        test_dataset_path = DATASET_DIR / f"{condition}_test_20000_32.npy" #_dataset_path(condition, "test", N_TEST, 2000)
+        test_dataset_path = DATASET_DIR / f"{condition}_test_5000_32.npy" #_dataset_path(condition, "test", N_TEST, 2000)
         train_seqs = generate_coherent_dataset(
             condition, n_sequences=N_TRAIN, n_qubits=N_QUBITS, fixed_L=FIXED_L,
             is_train=True, filename=str(train_dataset_path),
@@ -88,7 +91,8 @@ def run_all(use_existing_datasets=True, reuse_existing_models=True, save_models=
         for arch_name in ARCHITECTURES:
             print(f"  {arch_name:<18}: ", end="", flush=True)
             rel, deep, per_layer = [], [], []
-            for seed in tqdm(range(N_SEEDS), desc=f"Training {arch_name}"):
+            for seed in range(N_SEEDS):
+                print(f"[seed {seed}] ", end="", flush=True)
                 model_path = _model_path(condition, arch_name, seed)
                 model = build_model(spec_dim, arch_name, seed=seed)
                 if reuse_existing_models and model_path.exists():
