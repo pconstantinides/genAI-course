@@ -18,6 +18,7 @@ interest (Original vs. full Dual-State).
 """
 
 import time
+from pathlib import Path
 from dataclasses import dataclass, field
 from tqdm import tqdm
 
@@ -46,14 +47,20 @@ ARCHITECTURES = {
 }
 
 
+def get_device():
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 # ----------------------------------------------------------------------
 # Shared tensor conversion (same convention as train_nnas.py)
 # ----------------------------------------------------------------------
-def to_tensors(seq, L_max):
-    specs = torch.tensor(seq.spec_features(L_max), dtype=torch.float32).unsqueeze(0)
-    noisy_y = torch.tensor(seq.y_noisy, dtype=torch.float32).unsqueeze(0)
-    p_hat = torch.tensor(seq.p_hat, dtype=torch.float32).unsqueeze(0)
-    y_true = torch.tensor(seq.y_noiseless, dtype=torch.float32).unsqueeze(0)
+def to_tensors(seq, L_max, device=None):
+    if device is None:
+        device = get_device()
+    specs = torch.tensor(seq.spec_features(L_max), dtype=torch.float32, device=device).unsqueeze(0)
+    noisy_y = torch.tensor(seq.y_noisy, dtype=torch.float32, device=device).unsqueeze(0)
+    p_hat = torch.tensor(seq.p_hat, dtype=torch.float32, device=device).unsqueeze(0)
+    y_true = torch.tensor(seq.y_noiseless, dtype=torch.float32, device=device).unsqueeze(0)
     return specs, noisy_y, p_hat, y_true
 
 def save_model(model, path, metadata=None):
@@ -67,14 +74,18 @@ def save_model(model, path, metadata=None):
     return path
 
 
-def load_model(model, path):
+def load_model(model, path, device=None):
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Model file not found: {path}")
 
-    payload = torch.load(path, map_location="cpu")
+    if device is None:
+        device = get_device()
+
+    payload = torch.load(path, map_location=device)
     state_dict = payload["state_dict"] if isinstance(payload, dict) and "state_dict" in payload else payload
     model.load_state_dict(state_dict)
+    model.to(device)
     model.eval()
     return model
 
@@ -192,7 +203,11 @@ def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_si
     beta_kl * mean(KL) automatically -- detected generically from the
     output tuple length, so nothing else here needed to change.
     """
+    device = get_device()
+    model.to(device)
     torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     rng = np.random.default_rng(seed)
 
@@ -204,6 +219,9 @@ def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_si
             batch_idx = perm[start:start + batch_size]
             batch_seqs = [train_seqs[i] for i in batch_idx]
             specs, noisy_y, p_hat, y_true, mask = _collate_batch(batch_seqs, L_max)
+            specs, noisy_y, p_hat, y_true, mask = (
+                specs.to(device), noisy_y.to(device), p_hat.to(device), y_true.to(device), mask.to(device)
+            )
 
             opt.zero_grad()
             out = model(specs, noisy_y, p_hat)
@@ -237,6 +255,8 @@ class EvalMetrics:
 
 
 def evaluate_model(model, test_seqs, L_max) -> EvalMetrics:
+    device = get_device()
+    model.to(device)
     model.eval()
     n = len(test_seqs)
     err_noisy = np.full((n, L_max), np.nan)
@@ -246,7 +266,7 @@ def evaluate_model(model, test_seqs, L_max) -> EvalMetrics:
 
     with torch.no_grad():
         for i, seq in enumerate(test_seqs):
-            specs, noisy_y, p_hat, y_true = to_tensors(seq, L_max)
+            specs, noisy_y, p_hat, y_true = to_tensors(seq, L_max, device=device)
             y_em = model(specs, noisy_y, p_hat)[0]  # tolerate the extra kl_seq output (Task 7/8)
             y_em_np = y_em.squeeze(0).numpy()
 
