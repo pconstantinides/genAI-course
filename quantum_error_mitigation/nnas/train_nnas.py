@@ -15,6 +15,12 @@ same as the rest of this codebase) settings, per Task 3's requirement.
 Also runs a small limited-training-data sweep (Task 4's "generalization
 with limited training data") for the two architectures of primary
 interest (Original vs. full Dual-State).
+
+CUDA: every tensor/model is routed through get_device() so the whole
+pipeline runs on GPU automatically when available (falls back to CPU
+otherwise) -- see the CUDA fix notes on evaluate_model and
+train_model_unbatched below for the two spots that were actually broken
+on GPU before this pass.
 """
 
 import time
@@ -67,7 +73,10 @@ def save_model(model, path, metadata=None):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "state_dict": model.state_dict(),
+        # state_dict is moved to CPU before saving so the checkpoint is
+        # loadable regardless of what device it was trained on / what
+        # device is available when it's later loaded.
+        "state_dict": {k: v.cpu() for k, v in model.state_dict().items()},
         "metadata": metadata or {},
     }
     torch.save(payload, path)
@@ -109,7 +118,13 @@ def build_model(spec_dim: int, arch_name: str, seed: int = 0) -> nn.Module:
     happened to be -- which depends on how many other models were built
     earlier in the same process/loop. That made architecture comparisons
     silently confounded by uncontrolled initialization noise, on top of
-    whatever genuine architectural effect existed."""
+    whatever genuine architectural effect existed.
+
+    Note: torch.manual_seed seeds the CPU RNG stream; since the model is
+    always constructed here before being moved to CUDA (construction
+    itself never happens on-device), this alone is sufficient to control
+    initialization even when a GPU is later used for training/eval --
+    there's no separate "seed the model's own weights on GPU" step needed."""
     torch.manual_seed(seed)
     cfg = ARCHITECTURES[arch_name]
     if cfg["cls"] == "single":
@@ -126,8 +141,21 @@ def train_model_unbatched(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0
     """Original, unbatched (one sequence per gradient step) training loop.
     Kept for reference/correctness-verification against the batched path
     below; NOT used by the main sweep (too slow at this experiment's
-    scale -- see the profiling note in train_model_batched)."""
+    scale -- see the profiling note in train_model_batched).
+
+    CUDA fix: this function previously never moved `model` to a device,
+    while `to_tensors(seq, L_max)` (called with no explicit device arg)
+    defaults to get_device() -- so on any machine with CUDA available,
+    the input tensors would land on GPU while the model's parameters
+    stayed on CPU, and the very first forward call would raise a
+    RuntimeError from the device mismatch. Now explicitly resolves and
+    moves to a single device up front, same pattern as train_model.
+    """
+    device = get_device()
+    model.to(device)
     torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
     rng = np.random.default_rng(seed)
@@ -138,7 +166,7 @@ def train_model_unbatched(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0
         total_loss = 0.0
         for idx in perm:
             seq = train_seqs[idx]
-            specs, noisy_y, p_hat, y_true = to_tensors(seq, L_max)
+            specs, noisy_y, p_hat, y_true = to_tensors(seq, L_max, device=device)
 
             opt.zero_grad()
             y_em, _ = model(specs, noisy_y, p_hat)
@@ -156,7 +184,11 @@ def _collate_batch(seqs, L_max):
     and build a validity mask. Padding only ever extends the END of a
     sequence, and the RNN core is causal (H_l depends only on X_1..X_l), so
     padding cannot leak into the loss-relevant (valid) positions -- it only
-    ever adds extra, masked-out tail computation."""
+    ever adds extra, masked-out tail computation.
+
+    Builds plain CPU tensors -- train_model moves the whole batch to the
+    target device in one shot after collation, which is cheaper than
+    building each padded array directly on GPU via many small ops."""
     B = len(seqs)
     max_L = max(s.L for s in seqs)
     spec_dim = seqs[0].spec_features(L_max).shape[-1]
@@ -195,7 +227,9 @@ def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_si
     Batching amortizes that fixed cost across `batch_size` sequences per
     step instead of one, since NNASCore/DualStateNNASCore already operate
     natively on (batch, L, feature_dim) tensors -- nothing in the model
-    needed to change.
+    needed to change. On GPU this matters even more: each small unbatched
+    forward/backward call pays kernel-launch + host-device sync overhead
+    on top of the autograd overhead measured on CPU.
 
     Task 7 (Physics-Informed plan): models that also return a per-layer
     KL term (PhysicsInformedNNASForQEM's forward returns (y_em, r,
@@ -268,7 +302,12 @@ def evaluate_model(model, test_seqs, L_max) -> EvalMetrics:
         for i, seq in enumerate(test_seqs):
             specs, noisy_y, p_hat, y_true = to_tensors(seq, L_max, device=device)
             y_em = model(specs, noisy_y, p_hat)[0]  # tolerate the extra kl_seq output (Task 7/8)
-            y_em_np = y_em.squeeze(0).numpy()
+            # CUDA fix: y_em can live on the GPU here (model.to(device)
+            # above); .numpy() only works on CPU tensors, so it must be
+            # brought back with .cpu() first, or this raises
+            # "can't convert cuda:0 device type tensor to numpy" as soon
+            # as CUDA is available.
+            y_em_np = y_em.squeeze(0).cpu().numpy()
 
             diff_noisy = seq.y_noisy - seq.y_noiseless
             diff_nnas = y_em_np - seq.y_noiseless
@@ -437,6 +476,9 @@ def run_limited_data_sweep(condition: str, train_sizes=(20, 50, 100), n_seeds=N_
 
 
 if __name__ == "__main__":
+    device = get_device()
+    print(f"Using device: {device}")
+
     all_results = {}
     for condition in CONDITIONS:
         all_results[condition] = run_condition(condition, n_train=N_TRAIN_DEFAULT)
