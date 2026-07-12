@@ -99,8 +99,13 @@ def run_all(use_existing_datasets=True, reuse_existing_models=True, save_models=
                     model = load_model(model, str(model_path))
                     print(f"    [seed {seed}] loaded existing model from {model_path}")
                 else:
-                    train_model(model, train_seqs, FIXED_L, epochs=EPOCHS, seed=seed, batch_size=BATCH_SIZE)
-
+                    train_model(model, train_seqs, FIXED_L, epochs=1, seed=seed, batch_size=BATCH_SIZE)
+                
+                m = evaluate_model(model, test_seqs, FIXED_L)
+                rel.append(m.rel_improvement_pct)
+                deep.append(m.deep_quartile_rel_improvement_pct)
+                per_layer.append(m.per_layer_mae)
+                noisy_layer_runs.append(m.per_layer_mae_noisy)  # identical across archs/seeds (depends only on test_seqs)
 
                 if save_models:
                     existing_metric = load_model_metadata(str(model_path)).get("rel_improvement_pct", -np.inf)
@@ -116,13 +121,6 @@ def run_all(use_existing_datasets=True, reuse_existing_models=True, save_models=
                                 "deep_quartile_rel_improvement_pct": float(m.deep_quartile_rel_improvement_pct),
                             },
                         )
-                
-                m = evaluate_model(model, test_seqs, FIXED_L)
-                rel.append(m.rel_improvement_pct)
-                deep.append(m.deep_quartile_rel_improvement_pct)
-                per_layer.append(m.per_layer_mae)
-                noisy_layer_runs.append(m.per_layer_mae_noisy)  # identical across archs/seeds (depends only on test_seqs)
-
             table[condition][arch_name] = (
                 float(np.mean(rel)), float(np.std(rel)),
                 float(np.mean(deep)), float(np.std(deep)),
