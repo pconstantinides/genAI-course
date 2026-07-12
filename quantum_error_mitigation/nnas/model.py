@@ -241,3 +241,180 @@ class DualStateNNASForQEM(nn.Module):
         if return_latents:
             return y_em, r, H_s_seq, H_c_seq
         return y_em, r
+
+
+# ============================================================================
+# PHYSICS-INFORMED GENERATIVE COHERENT BRANCH -- additive; nothing above is
+# modified. Research plan: "Physics-Informed Generative Coherent Branch for
+# NNAS". The stochastic branch is reused unchanged (Task 1); only the
+# coherent branch is replaced, with a conditional generative model (Task 2),
+# a gate-conditioned prior (Task 3), reparameterized sampling (Task 4), and
+# a fixed deterministic BCH-inspired propagation layer (Task 5), fused with
+# the stochastic branch (Task 6) into the SAME extractor formula as
+# NNASCore/DualStateNNASCore.
+# ============================================================================
+class GenerativeCoherentBranch(nn.Module):
+    """
+    Per layer l:
+      Task 2: recurrent posterior q(delta_h_l | x_l, g_l) -- mu_l, logvar_l.
+      Task 3: gate-conditioned prior p(delta_h_l | g_l) -- depends on g_l
+              only (an MLP, no recurrence).
+      Task 4: reparameterized sample delta_h_l = mu_l + sigma_l * eps.
+      Task 5: deterministic, non-trainable BCH-inspired propagation,
+              Delta_H_l = Delta_H_{l-1} + Ad_{U_l}(delta_h_l), first order.
+
+    This codebase has no separate per-layer "gate descriptor" (gate type /
+    qubits / parameters) distinct from the embedded circuit features -- per
+    the plan's allowance to approximate when exact structure is
+    unavailable, g_l is taken to be the same embedded feature vector x_l
+    (minimal-change choice; a real gate encoding could replace this
+    without touching anything else). Similarly, exact per-layer gate
+    unitaries U_l aren't available at this level of the model, so Ad_{U_l}
+    is approximated (as the plan explicitly allows) by a single fixed,
+    non-trainable orthogonal linear map shared across layers.
+    """
+
+    def __init__(self, feature_dim: int, hidden_dim: int = 32):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+
+        # Task 2: recurrent posterior
+        self.rnn_cell = nn.GRUCell(feature_dim, hidden_dim)
+        self.mu_head = nn.Linear(hidden_dim, hidden_dim)
+        self.logvar_head = nn.Linear(hidden_dim, hidden_dim)
+
+        # Task 3: gate-conditioned prior (function of g_l only, no recurrence)
+        self.prior_mlp = nn.Sequential(nn.Linear(feature_dim, hidden_dim), nn.Tanh())
+        self.prior_mu_head = nn.Linear(hidden_dim, hidden_dim)
+        self.prior_logvar_head = nn.Linear(hidden_dim, hidden_dim)
+
+        # Task 5: fixed (non-trainable) BCH-inspired propagation operator Ad_U
+        Q, _ = torch.linalg.qr(torch.randn(hidden_dim, hidden_dim))
+        self.register_buffer("Ad_U", Q)
+
+    def forward(self, X: torch.Tensor):
+        """
+        X: (batch, L, feature_dim), used as both x_l and g_l (see docstring).
+        Returns:
+            Delta_H_seq: (batch, L, hidden_dim) -- accumulated generator per layer
+            kl_seq:      (batch, L)             -- per-layer KL(q || prior)
+        """
+        batch, L, _ = X.shape
+        device = X.device
+        h = torch.zeros(batch, self.hidden_dim, device=device)
+        Delta_H = torch.zeros(batch, self.hidden_dim, device=device)
+
+        Delta_H_out, kl_out = [], []
+        for l in range(L):
+            x_l = X[:, l, :]
+            g_l = x_l  # gate-descriptor proxy (see class docstring)
+
+            # Task 2
+            h = self.rnn_cell(x_l, h)
+            mu_l = self.mu_head(h)
+            logvar_l = self.logvar_head(h)
+
+            # Task 3
+            prior_h = self.prior_mlp(g_l)
+            mu_prior = self.prior_mu_head(prior_h)
+            logvar_prior = self.prior_logvar_head(prior_h)
+
+            # Task 4: reparameterization trick
+            sigma_l = torch.exp(0.5 * logvar_l)
+            eps = torch.randn_like(sigma_l)
+            delta_h_l = mu_l + sigma_l * eps
+
+            # Task 5: deterministic, first-order BCH-inspired propagation
+            Delta_H = Delta_H + delta_h_l @ self.Ad_U.T
+
+            # Closed-form KL between diagonal Gaussians q and prior
+            kl_l = 0.5 * (
+                (logvar_prior - logvar_l)
+                + (logvar_l.exp() + (mu_l - mu_prior) ** 2) / logvar_prior.exp()
+                - 1.0
+            ).sum(dim=-1)
+
+            Delta_H_out.append(Delta_H)
+            kl_out.append(kl_l)
+
+        return torch.stack(Delta_H_out, dim=1), torch.stack(kl_out, dim=1)
+
+
+class PhysicsInformedNNASCore(nn.Module):
+    """Task 1 + 6: unchanged stochastic branch (identical cell to
+    NNASCore's), fused via concatenation with a (linearly projected)
+    GenerativeCoherentBranch output, fed through an unchanged copy of the
+    extractor formula (Eqs. 6/22, 7/23)."""
+
+    def __init__(self, feature_dim: int, hidden_dim: int = 32, d: int = 8):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.d = d
+
+        # Task 1: stochastic branch, unchanged (same cell as NNASCore)
+        self.linear_x_s = nn.Linear(feature_dim, hidden_dim)
+        self.linear_h_s = nn.Linear(hidden_dim, hidden_dim)
+
+        # Task 2-5: generative coherent branch
+        self.coherent = GenerativeCoherentBranch(feature_dim, hidden_dim)
+        # Task 6: projection of Delta_H into the hidden dimension before fusion
+        self.coherent_proj = nn.Linear(hidden_dim, hidden_dim)
+
+        combined_dim = hidden_dim * 2
+        self.W_U = nn.Linear(combined_dim, d)
+        self.W_N = nn.Linear(combined_dim, d)
+        self.readout = nn.Linear(d, 1)
+        nn.init.zeros_(self.readout.weight)
+        nn.init.zeros_(self.readout.bias)
+
+    def forward(self, X: torch.Tensor):
+        batch, L, _ = X.shape
+        device = X.device
+        H_s = torch.zeros(batch, self.hidden_dim, device=device)
+
+        Delta_H_seq, kl_seq = self.coherent(X)  # (batch, L, hidden_dim), (batch, L)
+
+        r_out = []
+        for l in range(L):
+            X_l = X[:, l, :]
+            H_s = torch.tanh(self.linear_x_s(X_l) + self.linear_h_s(H_s))
+            H_c = self.coherent_proj(Delta_H_seq[:, l, :])
+
+            H_combined = torch.cat([H_s, H_c], dim=-1)  # Task 6: fusion
+
+            U_hat = self.W_U(H_combined)
+            N_hat = self.W_N(H_combined)
+            outer = torch.bmm(U_hat.unsqueeze(2), N_hat.unsqueeze(1))
+            attn = torch.softmax(outer / math.sqrt(self.d), dim=-1)
+            A_l = torch.bmm(attn, U_hat.unsqueeze(2)).squeeze(2)
+
+            r_l = torch.nn.functional.softplus(self.readout(A_l).squeeze(-1))
+            r_out.append(r_l)
+
+        r = torch.stack(r_out, dim=1)
+        return r, kl_seq
+
+
+class PhysicsInformedNNASForQEM(nn.Module):
+    """Same feature embedding and mitigation formula (Eq. 2) as NNASForQEM/
+    DualStateNNASForQEM -- forward returns (y_em, r, kl_seq); the extra
+    kl_seq is the Task 7 regularization term (D_KL(q||prior) per layer),
+    to be combined into the training loss as L_mitigation + beta*L_KL."""
+
+    def __init__(self, spec_dim: int, hidden_dim: int = 32, d: int = 8,
+                 use_noisy_results: bool = True):
+        super().__init__()
+        self.use_noisy_results = use_noisy_results
+        feature_dim = spec_dim + (1 if use_noisy_results else 0)
+        self.core = PhysicsInformedNNASCore(feature_dim=feature_dim, hidden_dim=hidden_dim, d=d)
+
+    def forward(self, specs: torch.Tensor, noisy_y: torch.Tensor, p_hat: torch.Tensor):
+        if self.use_noisy_results:
+            X = torch.cat([specs, noisy_y.unsqueeze(-1)], dim=-1)
+        else:
+            X = specs
+
+        r, kl_seq = self.core(X)
+        prior = torch.cumprod(1.0 - p_hat, dim=1)
+        y_em = noisy_y / (prior + r)
+        return y_em, r, kl_seq

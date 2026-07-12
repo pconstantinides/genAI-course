@@ -19,14 +19,13 @@ interest (Original vs. full Dual-State).
 
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 from coherent_noise_dataset import generate_coherent_dataset, CONDITIONS
-from model import NNASForQEM, DualStateNNASForQEM
+from model import NNASForQEM, DualStateNNASForQEM, PhysicsInformedNNASForQEM
 
 EPOCHS = 120
 LR = 3e-3
@@ -35,12 +34,14 @@ FIXED_L = 16
 N_TRAIN_DEFAULT = 60
 N_TEST = 80
 PARTIAL_TRAINING_RATE = 0.25
+BETA_KL = 1e-3  # Task 7 default, per the research plan
 
 ARCHITECTURES = {
     "Original NNAS":     dict(cls="single"),
     "Dual-State (full)": dict(cls="dual", use_stochastic=True,  use_coherent=True),
     "Stochastic-only":   dict(cls="dual", use_stochastic=True,  use_coherent=False),
     "Coherent-only":     dict(cls="dual", use_stochastic=False, use_coherent=True),
+    "Physics-Informed (generative)": dict(cls="physics"),
 }
 
 
@@ -53,7 +54,6 @@ def to_tensors(seq, L_max):
     p_hat = torch.tensor(seq.p_hat, dtype=torch.float32).unsqueeze(0)
     y_true = torch.tensor(seq.y_noiseless, dtype=torch.float32).unsqueeze(0)
     return specs, noisy_y, p_hat, y_true
-
 
 def save_model(model, path, metadata=None):
     path = Path(path)
@@ -88,7 +88,6 @@ def load_model_metadata(path):
         return payload["metadata"]
     return {}
 
-
 def build_model(spec_dim: int, arch_name: str, seed: int = 0) -> nn.Module:
     """IMPORTANT: seeds torch's global RNG BEFORE constructing the model,
     so weight initialization is actually controlled by `seed`. Previously
@@ -103,6 +102,8 @@ def build_model(spec_dim: int, arch_name: str, seed: int = 0) -> nn.Module:
     cfg = ARCHITECTURES[arch_name]
     if cfg["cls"] == "single":
         return NNASForQEM(spec_dim=spec_dim, hidden_dim=32, d=8, use_noisy_results=True)
+    if cfg["cls"] == "physics":
+        return PhysicsInformedNNASForQEM(spec_dim=spec_dim, hidden_dim=32, d=8, use_noisy_results=True)
     return DualStateNNASForQEM(
         spec_dim=spec_dim, hidden_dim=32, d=8, use_noisy_results=True,
         use_stochastic=cfg["use_stochastic"], use_coherent=cfg["use_coherent"],
@@ -166,7 +167,7 @@ def _collate_batch(seqs, L_max):
             torch.tensor(y_true), torch.tensor(mask))
 
 
-def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_size=20):
+def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_size=20, beta_kl=BETA_KL):
     """
     Batched training loop (padding + masked MSE loss). Same optimizer/lr/
     epochs semantics as the unbatched version -- the only change is how
@@ -183,6 +184,12 @@ def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_si
     step instead of one, since NNASCore/DualStateNNASCore already operate
     natively on (batch, L, feature_dim) tensors -- nothing in the model
     needed to change.
+
+    Task 7 (Physics-Informed plan): models that also return a per-layer
+    KL term (PhysicsInformedNNASForQEM's forward returns (y_em, r,
+    kl_seq), vs. everyone else's (y_em, r)) get L = L_mitigation +
+    beta_kl * mean(KL) automatically -- detected generically from the
+    output tuple length, so nothing else here needed to change.
     """
     torch.manual_seed(seed)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
@@ -198,9 +205,13 @@ def train_model(model, train_seqs, L_max, epochs=EPOCHS, lr=LR, seed=0, batch_si
             specs, noisy_y, p_hat, y_true, mask = _collate_batch(batch_seqs, L_max)
 
             opt.zero_grad()
-            y_em, _ = model(specs, noisy_y, p_hat)
+            out = model(specs, noisy_y, p_hat)
+            y_em = out[0]
             sq_err = (y_em - y_true) ** 2 * mask
             loss = sq_err.sum() / mask.sum()
+            if len(out) == 3:  # (y_em, r, kl_seq) -- Task 7 KL regularizer
+                kl_seq = out[2]
+                loss = loss + beta_kl * (kl_seq * mask).sum() / mask.sum()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             opt.step()
@@ -235,7 +246,7 @@ def evaluate_model(model, test_seqs, L_max) -> EvalMetrics:
     with torch.no_grad():
         for i, seq in enumerate(test_seqs):
             specs, noisy_y, p_hat, y_true = to_tensors(seq, L_max)
-            y_em, _ = model(specs, noisy_y, p_hat)
+            y_em = model(specs, noisy_y, p_hat)[0]  # tolerate the extra kl_seq output (Task 7/8)
             y_em_np = y_em.squeeze(0).numpy()
 
             diff_noisy = seq.y_noisy - seq.y_noiseless

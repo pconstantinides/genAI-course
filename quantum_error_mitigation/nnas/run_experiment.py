@@ -68,8 +68,8 @@ def run_all(use_existing_datasets=True, reuse_existing_models=True, save_models=
 
     for condition in CONDITIONS:
         print(f"\n=== {condition} ===")
-        train_dataset_path = _dataset_path(condition, "train", N_TRAIN, 1000)
-        test_dataset_path = _dataset_path(condition, "test", N_TEST, 2000)
+        train_dataset_path = DATASET_DIR / f"{condition}_train_20000_23.npy" #_dataset_path(condition, "train", N_TRAIN, 1000)
+        test_dataset_path = DATASET_DIR / f"{condition}_test_20000_32.npy" #_dataset_path(condition, "test", N_TEST, 2000)
         train_seqs = generate_coherent_dataset(
             condition, n_sequences=N_TRAIN, n_qubits=N_QUBITS, fixed_L=FIXED_L,
             is_train=True, filename=str(train_dataset_path),
@@ -184,8 +184,8 @@ def plot_depth_curves(depth_curves, depth_std_curves, noisy_curves):
         ax.grid(alpha=0.3)
     axes.flat[0].legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig("error_vs_depth.png", dpi=150)
-    print("Saved plot to error_vs_depth.png")
+    fig.savefig("error_vs_depth_2.png", dpi=150)
+    print("Saved plot to error_vs_depth_2.png")
 
 
 if __name__ == "__main__":
