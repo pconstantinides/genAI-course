@@ -301,13 +301,13 @@ if __name__ == "__main__":
     # the accumulated over-rotation angle increases.
     
     from run_experiment import _dataset_path
-    seed = 23
-    n_sequences = 20_000
+    seed = 32
+    n_sequences = 5_000
     
     for condition in CONDITIONS:
         seqs = generate_coherent_dataset(
             condition, n_sequences=n_sequences, n_qubits=4, fixed_L=20,
-            is_train=True, seed=seed, filename=_dataset_path(condition, "train", n_sequences, seed)
+            is_train=False, seed=seed, filename=_dataset_path(condition, "test", n_sequences, seed)
         )
         # errs = np.array([np.abs(s.y_noisy - s.y_noiseless) for s in seqs])
         # p_hat_example = seqs[0].p_hat
