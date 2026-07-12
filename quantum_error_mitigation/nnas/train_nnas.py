@@ -38,7 +38,7 @@ from model import NNASForQEM, DualStateNNASForQEM, PhysicsInformedNNASForQEM
 EPOCHS = 120
 LR = 3e-3
 N_QUBITS = 4
-FIXED_L = 16
+FIXED_L = 20
 N_TRAIN_DEFAULT = 60
 N_TEST = 80
 PARTIAL_TRAINING_RATE = 0.25
@@ -355,7 +355,7 @@ def evaluate_model(model, test_seqs, L_max) -> EvalMetrics:
 # per-sequence SGD while still giving a large (~3x) speedup from batching.
 # ----------------------------------------------------------------------
 N_SEEDS = 3
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 
 
 @dataclass
