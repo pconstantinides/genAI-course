@@ -41,7 +41,7 @@ N_TRAIN = 80
 N_TEST = 100
 N_SEEDS = 3
 EPOCHS = 20
-DEPTH_PLOT_ARCHS = ("Original NNAS", "Dual-State (full)")  # kept to 2 lines/plot for readability
+DEPTH_PLOT_ARCHS = ("Original NNAS", "Dual-State (full)", "Stochastic-only", "Coherent-only", "Physics-Informed (generative)")
 
 RESULTS_DIR = Path(__file__).resolve().parent / "artifacts"
 DATASET_DIR = RESULTS_DIR / "datasets"
@@ -105,8 +105,8 @@ def run_all(use_existing_datasets=True, reuse_existing_models=True, save_models=
                 rel.append(m.rel_improvement_pct)
                 deep.append(m.deep_quartile_rel_improvement_pct)
                 per_layer.append(m.per_layer_mae)
-                noisy_layer_runs.append(m.per_layer_mae_noisy)  # identical across archs/seeds (depends only on test_seqs)
-
+                noisy_layer_runs.append(m.per_layer_mae_noisy)
+                
                 if save_models:
                     existing_metric = load_model_metadata(str(model_path)).get("rel_improvement_pct", -np.inf)
                     if not model_path.exists() or m.rel_improvement_pct > existing_metric:
@@ -165,7 +165,7 @@ def print_table(table):
 
 
 def plot_depth_curves(depth_curves, depth_std_curves, noisy_curves):
-    fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharex=True)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 9), sharex=True)  # slightly bigger: 4 lines + shading need more room
     for ax, condition in zip(axes.flat, CONDITIONS):
         L = len(noisy_curves[condition])
         x = np.arange(1, L + 1)
@@ -181,11 +181,14 @@ def plot_depth_curves(depth_curves, depth_std_curves, noisy_curves):
                 alpha=0.2,
                 linewidth=0,
             )
-        ax.set_title(condition)
+
+        ax.set_yscale('log')  # fixed: was ax.yscale(...), which raises AttributeError on an Axes
+
+        ax.set_title(condition, fontweight='bold')
         ax.set_xlabel("Circuit depth (layer)")
         ax.set_ylabel("MAE")
         ax.grid(alpha=0.3)
-    axes.flat[0].legend(fontsize=8)
+    axes.flat[0].legend(fontsize=7, edgecolor='black', shadow=True)  # fontsize 8->7: one more line to fit now
     fig.tight_layout()
     fig.savefig("error_vs_depth_4.png", dpi=150)
     print("Saved plot to error_vs_depth_4.png")
