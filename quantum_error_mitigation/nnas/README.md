@@ -1,14 +1,14 @@
 ## Physics-inpired Quantum Error Mitigation by Generative Autoregression
 
 ### Usage
-In order to
+In order to recreate the reported results run
 
 ```python
-
+python3 run_experiment.py
 ```
+inference and benchmarking may take more than an hour depending on hardware.
 
 ### Project structure
-tree
 ```text
 nnas
 ├── artifacts
@@ -28,7 +28,7 @@ nnas
 ├── error_vs_depth*.png               # Main performance comparison figures
 └── results_table.txt                # Numerical evaluation results
 ```
-
+**No pre-existing code, datasets or models was available.**
 
 ### Project submition
 For the purposes of the Generative AI course I suggest watching the video presentation, as it is more distilled and tailored to the background of the viewer.
