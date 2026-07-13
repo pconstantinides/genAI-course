@@ -1,0 +1,30 @@
+\section{Results}
+
+The primary objective of this study is to establish the feasibility of the proposed physics-informed extension of NNAS rather than to optimize its predictive performance. Consequently, the experiments presented in this section should be viewed as a proof-of-concept evaluation designed to assess whether the proposed architecture can successfully integrate physically motivated coherent error modeling while maintaining the mitigation capabilities of the original NNAS. A comprehensive exploration of hyperparameter optimization, larger-scale datasets, and study of more accurate prior distributions is left for future work.
+
+To evaluate the proposed extension, we compare the original NNAS architecture with four different models: (i) the original NNAS, (ii) a dual-state architecture combining stochastic and coherent branches, (iii) stochastic-only and coherent-only versions and (iv) the proposed physics-informed generative model. Performance is reported in terms of mean absolute error (MAE) as a function of circuit depth under four noise settings: stochastic, coherent, mixed, and coherent drift. The noisy (unmitigated) baseline is included for reference.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/error_vs_depth_3.png}
+    \caption{Mean absolute error (MAE) as a function of circuit depth for the original NNAS, the proposed physics-informed generative extension as well as it's non generative (dual state) version and baseline variants under stochastic, coherent, mixed, and coherent drift noise models. All learned approaches demonstrate some error mitigation potential the unmitigated baseline, while the proposed method achieves mitigation performance comparable to existing NNAS variants across all evaluated noise settings.}
+    \label{fig:results}
+\end{figure*}
+
+\subsection{Stochastic Noise}
+
+Figure~\ref{fig:results} (upper left) shows the mitigation performance under purely stochastic noise. All learned models substantially outperform the unmitigated baseline across the entire depth range, demonstrating that the proposed coherent modeling does not degrade the stochastic mitigation capabilities inherited from the original NNAS. The proposed dual-state architecture achieves the lowest MAE (no generative part) for most circuit depths, while the physics-informed generative model remains competitive, exhibiting only a modest increase in prediction error at larger depths. As expected, the stochastic-only model performs comparably to the original NNAS. These observations suggest that the additional coherent branch does not interfere with the stochastic representation learned by the original architecture.
+
+\subsection{Coherent Noise}
+
+The coherent noise experiment is shown in Fig.~\ref{fig:results} (upper right). Under the current experimental configuration, all coherent-aware architectures exhibit comparable performance across the evaluated circuit depths, with no approach consistently outperforming the others. Although the proposed physics-informed generative model does not provide a measurable improvement in mitigation accuracy for this proof-of-concept setting, it demonstrates that explicitly modeling coherent error generators through a probabilistic latent representation and deterministic algebraic propagation can be incorporated into the NNAS framework without degrading performance.
+
+\subsection{Mixed Noise}
+
+Results under simultaneous stochastic and coherent noise are shown in Fig.~\ref{fig:results} (lower left). The proposed model maintains performance comparable to the competing architectures throughout the evaluated depth range. While no single model consistently dominates, the physics-informed generative branch exhibits stable behavior as circuit depth increases and remains significantly below the unmitigated error. This indicates that separating stochastic and coherent latent representations allows the network to model both error sources simultaneously without sacrificing predictive performance.
+
+\subsection{Coherent Drift}
+
+Results under coherent drift are presented in Fig.~\ref{fig:results} (lower right). Similar to the coherent-only experiment, all learned models achieve comparable mitigation performance throughout the evaluated depth range, and no consistent performance advantage is observed for any particular architecture. These results suggest that, under the current dataset and model configuration, the proposed coherent branch performs on par with existing approaches while introducing a physically motivated and interpretable representation of coherent error propagation.
+
+Overall, the proposed physics-informed generative extension achieves mitigation performance comparable to that of the original NNAS and the dual-state (non generative) baseline across all evaluated noise models. While the present proof-of-concept does not demonstrate a consistent reduction in MAE over existing approaches, it shows that incorporating explicit physical structure into the coherent branch does not compromise predictive accuracy. More importantly, the proposed formulation introduces an interpretable decomposition in which local coherent error generators are inferred probabilistically and propagated according to a deterministic mathematical model, providing a principled foundation for future extensions involving more accurate coherent error propagation and hardware-informed priors.

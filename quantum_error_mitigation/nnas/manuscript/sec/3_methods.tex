@@ -1,0 +1,72 @@
+\section{Methods}
+
+\subsection{Physics-Informed Modeling of Coherent Errors}
+
+The original NNAS architecture was developed to model errors due to decoherence through a recurrent latent representation (surrogates). Already it is shown \cite{xu2025} that NNAS outperforms a variaty of traditional QEM methods like ZNE. Nevertheless it does not explicitly capture coherent errors (for background see Appendix \ref{sec:errors}) arising from control imperfections or calibration drift.
+These types of errors compose according to the algebra of unitary operators (see Appendix \ref{sec:computation}) and therefore exhibit noise accumulation that depends on the specific circuit and not so much the environment of the device. As a result, the original NNAS model is not designed to capture such errors.
+
+To address this limitation, we upgrade NNAS with a seperate surrogate branch dedicated to coherent errors. This propagation mechanism is explicitly guided by physical principles. Rather than learning the evolution of coherent errors directly, the proposed architecture separates the estimation of local coherent error sources from their subsequent propagation. Specifically, each quantum circuit layer is associated with a latent coherent error generator,
+\begin{equation}
+    \label{eq:error_generator}
+    \delta\mathbf{h}_l
+\end{equation}
+which represents the small unitary error introduced by the corresponding quantum gate. More specifically this is a purturbation to the ideal dynamics of the unitary operation, as described by Schrodinger's equation
+\begin{equation}
+    U_l^\text{noisy} = e^{i(\mathbf{H}_l + \delta\mathbf{h}_l)t}.
+\end{equation}
+
+Let $\Delta\mathbf{H}_{l-1}$ denote the accumulated coherent error generator after the $(l-1)$-th circuit layer. Given the ideal unitary operator $U_l$, the accumulated generator is updated according to
+
+\begin{equation}
+\Delta\mathbf{H}_l = \Delta\mathbf{H}_{l-1} + \mathrm{Ad}_{U_l}(\delta\mathbf{h}_l)
+\end{equation}
+where $\mathrm{Ad}_{U_l}(\cdot)$ denotes the adjoint action induced by the ideal gate. This first-order approximation transports each local generator into the global reference frame before accumulation. For applications requiring higher fidelity, the first Baker--Campbell--Hausdorff (BCH) correction can be incorporated,
+
+\begin{equation}
+    \Delta\mathbf{H}_l = \Delta\mathbf{H}_{l-1} + \mathrm{Ad}_{U_l}(\delta\mathbf{h}_l) + \frac{1}{2}
+    \left[ \Delta\mathbf{H}_{l-1}, \mathrm{Ad}_{U_l}(\delta\mathbf{h}_l)\right]
+\end{equation}
+allowing the model to account for non-commuting coherent errors. Since this propagation module contains no trainable parameters, the evolution of coherent errors is purely physical. Consequently, the neural network is not required to learn coherent error composition and instead focuses exclusively on estimating local coherent error generators.
+
+\subsection{Conditional Generation of Error Generators}
+
+A central assumption of the proposed architecture is that coherent errors originate locally at individual circuit layers. Rather than directly predicting a global coherent error representation, the network learns a probabilistic model over these local error generators.
+At every circuit layer $l$, a recurrent neural network receives the embedded circuit representation $\mathbf{x}_l$, the gate descriptor $\mathbf{g}_l$, and the previous hidden state. The recurrent representation is used to parameterize a conditional Gaussian posterior
+
+\begin{equation}
+    q(\delta\mathbf{h}_l|\mathbf{x}_l,\mathbf{g}_l) = \mathcal{N}(\boldsymbol{\mu}_l,\mathbf{\Sigma}_l)
+\end{equation}
+whose latent variable corresponds to the coherent error generator as in Eq. \ref{eq:error_generator}. Samples are obtained using the standard reparameterization trick,
+
+\begin{equation}
+    \delta\mathbf{h}_l = \boldsymbol{\mu}_l + \boldsymbol{\sigma}_l \odot \boldsymbol{\epsilon}
+    \text{  with  }
+    \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})
+\end{equation}
+which makes the sampling process differentiable.
+
+The key intuition behind the generative task is that coherent errors are not deterministic quantities but depend on multiple unobserved factors, including calibration uncertainty, control electronics, and environmental fluctuations. Modeling coherent error generators as latent random variables therefore provides a proper mechanism for representing uncertainty while allowing the network to learn distributions rather than single deterministic values.
+Furthermore, different quantum gates exhibit distinct coherent error characteristics. For example, single-qubit rotations and two-qubit entangling gates are typically subject to noise levels. To encode this prior knowledge, we introduce a gate-conditioned prior network,
+
+\begin{equation}
+    p(\delta\mathbf{h}_l|\mathbf{g}_l) = \mathcal{N}
+    (\boldsymbol{\mu}^\text{prior}_l, \mathbf{\Sigma}^\text{prior}_l)
+\end{equation}
+implemented as a lightweight multilayer perceptron that receives only the gate descriptor as input. This prior captures the expected statistics of coherent error generators for each gate type while remaining independent of the surrounding circuit context. During training, the inferred posterior is encouraged to remain close to this physically motivated prior, allowing circuit-specific coherent errors to be learned without discarding prior information about gate-dependent error behavior.
+
+
+\subsection{Model Fusion and Training}
+
+The coherent and incoherent branches evolve independently throughout the architecture. The later follows the original NNAS formulation and models the accumulation of incoherent noise using its recurrent surrogate representation. In parallel, the proposed coherent branch generates local coherent error generators and propagates them through the deterministic algebraic module described above.
+After propagating the coherent generators, the accumulated coherent representation $\Delta\mathbf{H}_l$ is projected into the latent feature space through a linear projection layer. This projected representation is concatenated with the stochastic latent representation produced by the original NNAS branch before being processed by the existing neural extractor. Consequently, the final attention-based module simultaneously receives information describing both incoherent and coherent error processes as an extensions to the original NNAS architecture.
+
+The model is trained end-to-end using the original mitigation MSE objective supplemented by a Kullback--Leibler regularization term,
+
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_{\mathrm{mitigation}}
+    +
+    \beta D_{\mathrm{KL}}\left(q(\delta\mathbf{h}_l|\mathbf{x}_l,\mathbf{g}_l)\;\|\;p(\delta\mathbf{h}_l|\mathbf{g}_l)\right)    
+\end{equation}
+where $\beta$ controls the contribution of the latent regularization. The mitigation loss remains unchanged from the original NNAS formulation, while the KL divergence regularizes the inferred coherent error generators toward the gate-conditioned prior. This objective encourages the network to generate coherent error distributions that are both physically plausible and informative for the mitigation task.
+
+Training is performed using the same circuit dataset employed by the original NNAS. To evaluate the proposed extension, the dataset is augmented with synthetic coherent noise by introducing systematic over-rotations and gate-dependent calibration offsets in addition to the existing noise models. Mixed-noise datasets are generated by combining coherent and incoherent error channels, enabling the model to learn realistic hardware noise characteristics. The proposed architecture is trained under the same optimization settings as the original NNAS, allowing improvements in mitigation performance to be attributed solely to the incorporation of the physics-informed coherent error branch while leaving room for future work.

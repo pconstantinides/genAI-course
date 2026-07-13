@@ -1,0 +1,21 @@
+\section{Conclusion}
+
+In this work, we proposed a physics-informed extension of the Neural Noise Accumulator and Suppressor (NNAS) architecture for learning-based quantum error mitigation. Unlike the original formulation, which models noise accumulation using purely data-driven recurrent dynamics, the proposed approach explicitly distinguishes between stochastic and coherent error processes. Local coherent error generators are modeled probabilistically through a conditional latent-variable model and propagated using a deterministic model derived from the Baker--Campbell--Hausdorff expansion. This decouples the estimation of coherent error sources from their physical evolution, yielding a more interpretable and physical architecture.
+
+The experimental results presented in this work serve as an initial proof of concept. Although the proposed model does not consistently outperform existing NNAS variants under the current datasets and experimental configurations, it demonstrates that physics-informed coherent error modeling can be integrated into a learning-based error mitigation framework without sacrificing predictive performance. More importantly, the proposed formulation establishes a new direction for combining generative machine learning with physically constrained models of quantum noise.
+
+The principal contributions of this work are summarized as follows:
+
+\begin{itemize}
+    \item We propose a physics-informed extension of the NNAS architecture for coherent error mitigation.
+    \item We introduce a conditional generative model for learning local coherent error generators.
+    \item We incorporate deterministic propagation into the coherent branch, inspired by the BCH decomposition .
+    \item We demonstrate proof-of-concept results, showcasing that this work can be integrated into NNAS without degrading mitigation performance.
+\end{itemize}
+
+\subsection*{Future Work}
+
+Future work will focus on imporving the training pipeline as well as gate-conditioned priors. Also evaluation on larger datasets and real quantum hardware are prominent directions.
+
+\section*{Implementation availability}
+The code, datasets and trained models have been made temporarily open source \cite{github} as this work is still in progress.

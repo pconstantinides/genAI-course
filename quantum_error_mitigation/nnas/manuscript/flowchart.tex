@@ -1,0 +1,261 @@
+% \documentclass[tikz, border=10pt]{standalone}
+% \usepackage{amsmath}
+% \usetikzlibrary{positioning, arrows.meta, fit, backgrounds, calc}
+
+% \begin{document}
+% \begin{tikzpicture}[
+%     node distance = 7mm and 12mm, % Increased horizontal spacing to prevent overlaps
+%     font=\small,
+%     every node/.style = {align=center},
+%     box/.style = {
+%         rectangle, rounded corners, draw=black, thick,
+%         minimum width=3.3cm, minimum height=1.1cm,
+%         text width=3.1cm, align=center
+%     },
+%     plain/.style = {
+%         rectangle, rounded corners, draw=black!60,
+%         minimum width=3.3cm, minimum height=0.9cm,
+%         text width=3.1cm, align=center, fill=white
+%     },
+%     blueBox/.style    = {box, fill=blue!20},
+%     orangeBox/.style = {box, fill=orange!25},
+%     greenBox/.style  = {box, fill=green!20},
+%     grayBox/.style   = {box, fill=gray!20},
+%     branchTitle/.style = {font=\small\bfseries, align=center, text width=3.6cm},
+%     solidArrow/.style = {-{Latex[length=2.2mm]}, thick},
+%     dashArrow/.style  = {-{Latex[length=2.2mm]}, thick, dashed, draw=black!70},
+% ]
+
+% %% ---------------- Stage 1: Input (Far Left) ----------------
+% \node[plain] (qc) {Quantum Circuit};
+% \node[plain, right=of qc] (cfe) {Circuit Feature\\Encoding};
+% \node[blueBox, right=of cfe] (fe) {Feature\\Embedding};
+
+% %% ---------------- Horizontal Row Coordinates ----------------
+% % Fixed Y positions relative to the Feature Embedding node to isolate the branches
+% \coordinate (upperRowY) at ($(fe.center) + (0,  2.2cm)$);
+% \coordinate (lowerRowY) at ($(fe.center) + (0, -2.5cm)$);
+
+% %% ---------------- Stage 2A: Original NNAS branch (Upper Row) ----------------
+% \node[branchTitle] (titleL) at ($(fe.east) + (2.2cm, 2.2cm)$) {Original NNAS\\(Stochastic Branch)};
+% \node[blueBox, right=of titleL] (na)   {Neural\\Accumulator};
+% \node[blueBox, right=of na]         (sls) {Stochastic\\Latent State};
+
+% %% ---------------- Stage 2B: Proposed coherent branch (Lower Row) ----------------
+% \node[branchTitle] (titleR) at ($(fe.east) + (2.2cm, -2.5cm)$) {Proposed Physics-Informed\\Coherent Branch};
+% \node[orangeBox, right=5mm of titleR] (re) {Recurrent\\Encoder};
+% \node[orangeBox, right=of re]         (pn) {Posterior Network\\Outputs: $\mu_l,\ \log\sigma_l^2$};
+% \node[orangeBox, right=of pn]         (rp) {Reparameterization};
+% \node[orangeBox, right=of rp]         (sd) {Sample $\delta h_l$};
+
+% %% ---------------- Gate-conditioned prior (Placed safely above posterior) ----------------
+% \node[grayBox, above=9mm of pn] (gp) {Gate-conditioned\\Prior Network\\$p(\delta h_l \mid g_l)$};
+
+% %% ---------------- Stage 3: Physics-based coherent propagation (Green Boxes Expanded) ----------------
+% \node[greenBox, right=of sd] (bch) {Physics-Informed\\BCH Propagation\\$\Delta H_{l-1} + \mathrm{Ad}_U(\delta h_l)$};
+% \node[greenBox, right=of bch] (dhl) {Accumulated\\Coherent Generator\\$\Delta H_l$};
+% \node[font=\scriptsize\itshape, below=1mm of bch] (bchnote) {Deterministic};
+
+% %% ---------------- Stage 4: Fusion & Convergence ----------------
+% \node[blueBox, right=of dhl] (proj) {Projection\\of $\Delta H_l$};
+
+% % Dynamic center anchor for fusion between upper and lower rows
+% \node[blueBox] (fus) at ($(proj.east |- fe.center) + (1.5cm, 0)$) {Latent Fusion\\(Concatenation)};
+
+% %% ---------------- Stage 5: Prediction ----------------
+% \node[blueBox, right=of fus] (ne) {Neural\\Extractor};
+% \node[blueBox, right=of ne] (mh) {Mitigation\\Head};
+% \node[blueBox, right=of mh] (po) {Predicted\\Observable};
+
+% %% ---------------- Training losses (Far Right Layout Fix) ----------------
+% \node[grayBox, above right=2mm and 12mm of po] (ml)  {Mitigation Loss};
+% \node[grayBox, below right=2mm and 12mm of po] (kll) {KL Loss};
+% \node[grayBox, right=4.5cm of po] (tl)  {Total Loss};
+
+% %% ================= ARROWS: main inference path =================
+% \draw[solidArrow] (qc) -- (cfe);
+% \draw[solidArrow] (cfe) -- (fe);
+
+% \draw[solidArrow] (fe.east) -- ++(4mm,0) |- (titleL.west);
+% \draw[solidArrow] (fe.east) -- ++(4mm,0) |- (titleR.west);
+
+% \draw[solidArrow] (titleL) -- (na);
+% \draw[solidArrow] (na) -- (sls);
+
+% \draw[solidArrow] (titleR) -- (re);
+% \draw[solidArrow] (re) -- (pn);
+% \draw[solidArrow] (pn) -- (rp);
+% \draw[solidArrow] (rp) -- (sd);
+% \draw[solidArrow] (sd) -- (bch);
+% \draw[solidArrow] (bch) -- (dhl);
+% \draw[solidArrow] (dhl) -- (proj);
+
+% \draw[solidArrow] (sls.east) -- ++(8mm,0) |- (fus.west);
+% \draw[solidArrow] (proj.east) -- ++(8mm,0) |- (fus.west);
+
+% \draw[solidArrow] (fus) -- (ne);
+% \draw[solidArrow] (ne) -- (mh);
+% \draw[solidArrow] (mh) -- (po);
+
+% \draw[solidArrow] (po.east) -- ++(4mm,0) |- (ml.west);
+% \draw[solidArrow] (po.east) -- ++(4mm,0) |- (kll.west);
+% \draw[solidArrow] (ml.east) -- ++(5mm,0) |- (tl.west);
+% \draw[solidArrow] (kll.east) -- ++(5mm,0) |- (tl.west);
+
+% %% ================= ARROWS: training-only (dashed) =================
+% \draw[dashArrow] (gp.south) -- node[midway, right, font=\scriptsize] {KL Reg.} (pn.north);
+
+% % Clear pathing around the right side of the graphics grid for KL calculation
+% \draw[dashArrow] (gp.north) -- ++(0, 5mm) -| (kll.north);
+% \draw[dashArrow] (pn.south) -- ++(0,-7mm) -| ($(re.south east) + (8mm, -5mm)$) |- (kll.south);
+
+% %% ================= Legend (Bottom Left placement) =================
+% \begin{scope}[shift={($(qc.south) + (-0.5cm, -4.5cm)$)}]
+%     \node[blueBox, minimum width=1.0cm, text width=0cm, minimum height=0.4cm] (legB) {};
+%     \node[right=1mm of legB, font=\scriptsize, align=left] {Original NNAS modules};
+    
+%     \node[orangeBox, minimum width=1.0cm, text width=0cm, minimum height=0.4cm, right=4.0cm of legB] (legO) {};
+%     \node[right=1mm of legO, font=\scriptsize, align=left] {New generative latent modules};
+    
+%     \node[greenBox, minimum width=1.0cm, text width=0cm, minimum height=0.4cm, right=4.5cm of legO] (legG) {};
+%     \node[right=1mm of legG, font=\scriptsize, align=left] {Physics-informed deterministic modules};
+    
+%     \node[grayBox, minimum width=1.0cm, text width=0cm, minimum height=0.4cm, right=5.3cm of legG] (legY) {};
+%     \node[right=1mm of legY, font=\scriptsize, align=left] {Training-only components};
+% \end{scope}
+
+% \end{tikzpicture}
+% \end{document}
+
+\documentclass[tikz, border=10pt]{standalone}
+\usepackage{amsmath}
+\usetikzlibrary{positioning, arrows.meta, fit, backgrounds, calc}
+
+\begin{document}
+\begin{tikzpicture}[
+    node distance = 7mm and 10mm,
+    font=\small,
+    every node/.style = {align=center},
+    box/.style = {
+        rectangle, rounded corners, draw=black, thick,
+        minimum width=3.2cm, minimum height=1.05cm,
+        text width=3.0cm, align=center
+    },
+    plain/.style = {
+        rectangle, rounded corners, draw=black!60,
+        minimum width=3.2cm, minimum height=0.9cm,
+        text width=3.0cm, align=center, fill=white
+    },
+    blueBox/.style   = {box, fill=blue!20},
+    orangeBox/.style = {box, fill=orange!25},
+    greenBox/.style  = {box, fill=green!20},
+    grayBox/.style   = {box, fill=gray!20},
+    branchTitle/.style = {font=\small\bfseries, align=center, text width=3.6cm},
+    solidArrow/.style = {-{Latex[length=2.2mm]}, thick},
+    dashArrow/.style  = {-{Latex[length=2.2mm]}, thick, dashed, draw=black!70},
+]
+
+%% ---------------- Stage 1: Input ----------------
+\node[plain] (qc) {Quantum Circuit};
+\node[plain, below=of qc] (cfe) {Circuit Feature\\Encoding};
+\node[blueBox, below=of cfe] (fe) {Feature\\Embedding};
+
+%% ---------------- Branch anchors ----------------
+% Left column (original NNAS) and right column (proposed coherent branch),
+% symmetric about the Feature Embedding node.
+\coordinate (splitL) at ($(fe.south) + (-3.0cm, -1.0cm)$);
+\coordinate (splitR) at ($(fe.south) + ( 3.0cm, -1.0cm)$);
+
+\node[branchTitle, below=3mm of splitL] (titleL) {Original NNAS\\(Stochastic Branch)};
+\node[branchTitle, below=3mm of splitR] (titleR) {Proposed Physics-Informed\\Coherent Branch};
+
+%% ---------------- Stage 2A: Original NNAS branch (left) ----------------
+\node[blueBox, below=8mm of titleL] (na)  {Neural\\Accumulator};
+\node[blueBox, below=of na]         (sls) {Stochastic\\Latent State};
+
+%% ---------------- Stage 2B: Proposed coherent branch (right) ----------------
+\node[orangeBox, below=8mm of titleR] (re) {Recurrent\\Encoder};
+\node[orangeBox, below=of re]         (pn) {Posterior Network\\Outputs: $\mu_l,\ \log\sigma_l^2$};
+\node[orangeBox, below=of pn]         (rp) {Reparameterization};
+\node[orangeBox, below=of rp]         (sd) {Sample $\delta h_l$};
+
+%% ---------------- Gate-conditioned prior (gray, training-only) ----------------
+\node[grayBox, right=14mm of pn] (gp) {Gate-conditioned\\Prior Network\\$p(\delta h_l \mid g_l)$};
+
+%% ---------------- Stage 3: Physics-based coherent propagation (green) ----------------
+\node[greenBox, below=of sd] (bch) {Physics-Informed\\BCH Propagation\\$\Delta H_{l-1} + \mathrm{Ad}_U(\delta h_l)$};
+\node[font=\scriptsize\itshape, below=0.5mm of bch] (bchnote) {Deterministic};
+\node[greenBox, below=9mm of bchnote] (dhl) {Accumulated\\Coherent Generator\\$\Delta H_l$};
+
+%% ---------------- Stage 4: Fusion ----------------
+\node[blueBox, below=of dhl] (proj) {Projection\\of $\Delta H_l$};
+
+\coordinate (fusY) at ($(proj.south) + (0, -1.1cm)$);
+\node[blueBox] (fus) at ($(fusY)!0.5!(sls |- fusY)$) {Latent Fusion\\(Concatenation)};
+
+%% ---------------- Stage 5: Prediction ----------------
+\node[blueBox, below=of fus] (ne) {Neural\\Extractor};
+\node[blueBox, below=of ne] (mh) {Mitigation\\Head};
+\node[blueBox, below=of mh] (po) {Predicted\\Observable};
+
+%% ---------------- Training losses ----------------
+\node[grayBox, below=13mm of po, xshift=-2.1cm] (ml)  {Mitigation Loss};
+\node[grayBox, below=13mm of po, xshift= 2.1cm] (kll) {KL Loss};
+\node[grayBox, below=of po, yshift=-2.6cm] (tl)  {Total Loss};
+
+%% ================= ARROWS: main inference path =================
+\draw[solidArrow] (qc) -- (cfe);
+\draw[solidArrow] (cfe) -- (fe);
+
+\draw[solidArrow] (fe.south) -- ++(0,-3mm) -| (na.north);
+\draw[solidArrow] (fe.south) -- ++(0,-3mm) -| (re.north);
+
+\draw[solidArrow] (na) -- (sls);
+\draw[solidArrow] (re) -- (pn);
+\draw[solidArrow] (pn) -- (rp);
+\draw[solidArrow] (rp) -- (sd);
+\draw[solidArrow] (sd) -- (bch);
+\draw[solidArrow] (bch) -- (dhl);
+\draw[solidArrow] (dhl) -- (proj);
+
+\draw[solidArrow] (sls.south) |- ($(fus.west)+(0,0)$) -- (fus.west);
+\draw[solidArrow] (proj.south) -- ++(0,-3mm) -| (fus.north);
+
+\draw[solidArrow] (fus) -- (ne);
+\draw[solidArrow] (ne) -- (mh);
+\draw[solidArrow] (mh) -- (po);
+
+\draw[solidArrow] (po.south) -- ++(0,-3mm) -| (ml.north);
+\draw[solidArrow] (ml) -- (tl);
+\draw[solidArrow] (kll) -- (tl);
+
+%% ================= ARROWS: training-only (dashed) =================
+% Prior regularizes the posterior (KL regularization), drawn near the top.
+\draw[dashArrow] (gp.north) to[out=140, in=0]
+    node[midway, above, font=\scriptsize, text width=2.2cm, align=center] {KL\\Regularization}
+    (pn.east);
+
+% Prior and posterior both feed the KL loss at the bottom; routed down the
+% right margin of the figure (clean orthogonal paths) to avoid crossing the
+% main inference path.
+\coordinate (marginX) at ($(gp.east) + (2.0cm, 0)$);
+\draw[dashArrow] (gp.east) -| (marginX) |- (kll.east);
+\draw[dashArrow] (pn.east) -| ($(marginX) + (0.6cm,0)$) |- (kll.north);
+
+%% ================= Legend =================
+% Anchored to the top-right of the figure (relative to Feature Embedding)
+% rather than to a mid-figure node, so it never collides with the branch
+% content below.
+\begin{scope}[shift={($(fe.east)+(6.5cm,1.0cm)$)}]
+    \node[blueBox, minimum width=1.6cm, text width=0cm, minimum height=0.5cm] (legB) {};
+    \node[right=1mm of legB, font=\scriptsize, text width=4cm, align=left] {Original NNAS modules};
+    \node[orangeBox, minimum width=1.6cm, text width=0cm, minimum height=0.5cm, below=2mm of legB] (legO) {};
+    \node[right=1mm of legO, font=\scriptsize, text width=4cm, align=left] {New generative latent modules};
+    \node[greenBox, minimum width=1.6cm, text width=0cm, minimum height=0.5cm, below=2mm of legO] (legG) {};
+    \node[right=1mm of legG, font=\scriptsize, text width=4cm, align=left] {Physics-informed deterministic modules};
+    \node[grayBox, minimum width=1.6cm, text width=0cm, minimum height=0.5cm, below=2mm of legG] (legY) {};
+    \node[right=1mm of legY, font=\scriptsize, text width=4cm, align=left] {Training-only components};
+\end{scope}
+
+\end{tikzpicture}
+\end{document}

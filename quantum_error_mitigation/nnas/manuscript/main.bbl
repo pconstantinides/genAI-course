@@ -1,0 +1,60 @@
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bravyi et~al.(2022)Bravyi, Gosset, and Liu]{PhysRevLett.128.220503}
+Sergey Bravyi, David Gosset, and Yinchen Liu.
+\newblock How to simulate quantum measurement without computing marginals.
+\newblock \emph{Phys. Rev. Lett.}, 128:\penalty0 220503, 2022.
+
+\bibitem[Cai et~al.(2023)Cai, Babbush, Benjamin, Endo, Huggins, Li, McClean,
+  and O'Brien]{RevModPhys.95.045005}
+Zhenyu Cai, Ryan Babbush, Simon~C. Benjamin, Suguru Endo, William~J. Huggins,
+  Ying Li, Jarrod~R. McClean, and Thomas~E. O'Brien.
+\newblock Quantum error mitigation.
+\newblock \emph{Rev. Mod. Phys.}, 95:\penalty0 045005, 2023.
+
+\bibitem[Constantinides(2026)]{github}
+Panos Constantinides.
+\newblock Code, 2026.
+
+\bibitem[Li and Benjamin(2017)]{PhysRevX.7.021050}
+Ying Li and Simon~C. Benjamin.
+\newblock Efficient variational quantum simulator incorporating active error
+  minimization.
+\newblock \emph{Phys. Rev. X}, 7:\penalty0 021050, 2017.
+
+\bibitem[Liao et~al.(2024)Liao, Wang, Sitdikov, Salcedo, Seif, and
+  Minev]{liao_machine_2024}
+Haoran Liao, Derek~S. Wang, Iskandar Sitdikov, Ciro Salcedo, Alireza Seif, and
+  Zlatko~K. Minev.
+\newblock Machine learning for practical quantum error mitigation.
+\newblock \emph{Nature Machine Intelligence}, 6\penalty0 (12):\penalty0
+  1478--1486, 2024.
+
+\bibitem[Placidi et~al.(2026)Placidi, Williams, Rinaldi, Mills, Cîrstoiu,
+  Eccles, and Duncan]{placidi2026deeplearningapproachesquantum}
+Leonardo Placidi, Ifan Williams, Enrico Rinaldi, Daniel Mills, Cristina
+  Cîrstoiu, Vanya Eccles, and Ross Duncan.
+\newblock Deep learning approaches to quantum error mitigation, 2026.
+
+\bibitem[Temme et~al.(2017)Temme, Bravyi, and Gambetta]{PhysRevLett.119.180509}
+Kristan Temme, Sergey Bravyi, and Jay~M. Gambetta.
+\newblock Error mitigation for short-depth quantum circuits.
+\newblock \emph{Phys. Rev. Lett.}, 119:\penalty0 180509, 2017.
+
+\bibitem[Waintal et~al.(2026)Waintal, Huang, and
+  Groth]{waintal2026competequantumcomputerslecture}
+Xavier Waintal, Chen-How Huang, and Christoph~W. Groth.
+\newblock Who can compete with quantum computers? lecture notes on quantum
+  inspired tensor networks computational techniques, 2026.
+
+\bibitem[Xu et~al.(2025)Xu, Xue, Chen, Ding, Li, Zhou, Huang, and Bao]{xu2025}
+Xiao-Yue Xu, Xin Xue, Tianyu Chen, Chen Ding, Tian Li, Haoyi Zhou, He-Liang
+  Huang, and Wan-Su Bao.
+\newblock Physics-inspired machine learning for quantum error mitigation, 2025.
+
+\end{thebibliography}
