@@ -190,8 +190,8 @@ def plot_depth_curves(depth_curves, depth_std_curves, noisy_curves):
         ax.grid(alpha=0.3)
     axes.flat[0].legend(fontsize=7, edgecolor='black', shadow=True)  # fontsize 8->7: one more line to fit now
     fig.tight_layout()
-    fig.savefig("error_vs_depth_4.png", dpi=150)
-    print("Saved plot to error_vs_depth_4.png")
+    fig.savefig("error_vs_depth_3.png", dpi=150)
+    print("Saved plot to error_vs_depth_3.png")
 
 
 if __name__ == "__main__":
