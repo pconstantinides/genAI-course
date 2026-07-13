@@ -363,3 +363,66 @@ Physics-Informed (generative)   +78.1% +/-  2.4%    +5.2% +/-  3.5%   +57.9% +/-
 
 Saved table to results_table.txt
 Saved plot to error_vs_depth_3.png
+
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed1.pt
+[seed 2] 
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :  +81.0% +/-  5.0%  (deep-quartile  +77.9% +/-  4.5%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :  +90.1% +/-  0.3%  (deep-quartile  +89.0% +/-  1.0%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :  +81.0% +/-  5.0%  (deep-quartile  +77.9% +/-  4.5%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :  +87.3% +/-  0.1%  (deep-quartile  +84.3% +/-  0.2%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):  +79.7% +/-  6.0%  (deep-quartile  +75.4% +/-  6.2%)
+
+=== coherent ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/coherent_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/coherent_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :   +5.7% +/-  0.6%  (deep-quartile   +7.1% +/-  1.1%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :   +5.2% +/-  1.2%  (deep-quartile   +6.3% +/-  1.8%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :   +5.7% +/-  0.6%  (deep-quartile   +7.1% +/-  1.1%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :   +3.7% +/-  0.6%  (deep-quartile   +4.2% +/-  1.0%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):   +4.5% +/-  1.4%  (deep-quartile   +6.1% +/-  2.0%)
+
+=== mixed ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/mixed_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/mixed_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :  +65.2% +/-  0.5%  (deep-quartile  +64.2% +/-  1.5%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :  +66.0% +/-  3.4%  (deep-quartile  +62.5% +/-  6.1%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :  +65.2% +/-  0.5%  (deep-quartile  +64.2% +/-  1.5%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :  +65.2% +/-  3.2%  (deep-quartile  +61.9% +/-  4.5%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):  +64.7% +/-  0.2%  (deep-quartile  +59.4% +/-  0.5%)
+
+=== drift ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/drift_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/drift_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :   +1.7% +/-  8.2%  (deep-quartile   +0.5% +/- 11.9%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :   +0.7% +/-  7.5%  (deep-quartile   -1.2% +/- 10.8%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :   +1.7% +/-  8.2%  (deep-quartile   +0.5% +/- 11.9%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :   +3.1% +/-  4.6%  (deep-quartile   +1.7% +/-  7.6%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):   +2.6% +/-  3.7%  (deep-quartile   +3.7% +/-  4.8%)
+
+Mean +/- std relative MAE improvement over noisy baseline (%), 3 seeds
+Architecture                    stochastic              coherent                 mixed                 drift
+------------------------------------------------------------------------------------------------------------
+Original NNAS          +81.0% +/-  5.0%    +5.7% +/-  0.6%   +65.2% +/-  0.5%    +1.7% +/-  8.2%
+Dual-State (full)      +90.1% +/-  0.3%    +5.2% +/-  1.2%   +66.0% +/-  3.4%    +0.7% +/-  7.5%
+Stochastic-only        +81.0% +/-  5.0%    +5.7% +/-  0.6%   +65.2% +/-  0.5%    +1.7% +/-  8.2%
+Coherent-only          +87.3% +/-  0.1%    +3.7% +/-  0.6%   +65.2% +/-  3.2%    +3.1% +/-  4.6%
+Physics-Informed (generative)   +79.7% +/-  6.0%    +4.5% +/-  1.4%   +64.7% +/-  0.2%    +2.6% +/-  3.7%
+
+Deepest-quartile-of-layers relative MAE improvement (%)
+Architecture                    stochastic              coherent                 mixed                 drift
+------------------------------------------------------------------------------------------------------------
+Original NNAS          +77.9% +/-  4.5%    +7.1% +/-  1.1%   +64.2% +/-  1.5%    +0.5% +/- 11.9%
+Dual-State (full)      +89.0% +/-  1.0%    +6.3% +/-  1.8%   +62.5% +/-  6.1%    -1.2% +/- 10.8%
+Stochastic-only        +77.9% +/-  4.5%    +7.1% +/-  1.1%   +64.2% +/-  1.5%    +0.5% +/- 11.9%
+Coherent-only          +84.3% +/-  0.2%    +4.2% +/-  1.0%   +61.9% +/-  4.5%    +1.7% +/-  7.6%
+Physics-Informed (generative)   +75.4% +/-  6.2%    +6.1% +/-  2.0%   +59.4% +/-  0.5%    +3.7% +/-  4.8%
+
+Saved table to results_table.txt
+Saved plot to error_vs_depth_4.png
