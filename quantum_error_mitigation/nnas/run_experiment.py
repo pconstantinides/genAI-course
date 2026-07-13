@@ -40,7 +40,7 @@ __main__.CoherentSequence = CoherentSequence
 N_TRAIN = 80
 N_TEST = 100
 N_SEEDS = 3
-EPOCHS = 120
+EPOCHS = 20
 DEPTH_PLOT_ARCHS = ("Original NNAS", "Dual-State (full)")  # kept to 2 lines/plot for readability
 
 RESULTS_DIR = Path(__file__).resolve().parent / "artifacts"
