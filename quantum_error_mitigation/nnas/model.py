@@ -242,21 +242,15 @@ class DualStateNNASForQEM(nn.Module):
             return y_em, r, H_s_seq, H_c_seq
         return y_em, r
 
-
-# ============================================================================
-# PHYSICS-INFORMED GENERATIVE COHERENT BRANCH -- additive; nothing above is
-# modified. Research plan: "Physics-Informed Generative Coherent Branch for
-# NNAS". The stochastic branch is reused unchanged (Task 1); only the
-# coherent branch is replaced, with a conditional generative model (Task 2),
-# a gate-conditioned prior (Task 3), reparameterized sampling (Task 4), and
-# a fixed deterministic BCH-inspired propagation layer (Task 5), fused with
-# the stochastic branch (Task 6) into the SAME extractor formula as
-# NNASCore/DualStateNNASCore.
-# ============================================================================
 class GenerativeCoherentBranch(nn.Module):
     """
     Per layer l:
-      Task 2: recurrent posterior q(delta_h_l | x_l, g_l) -- mu_l, logvar_l.
+      Task 2: recurrent posterior q(delta_h_l | x_l, g_l, Delta_H_{l-1}) --
+              mu_l, logvar_l. The GRU input is [x_l ; proj(Delta_H_{l-1})],
+              closing the feedback loop: the generator sees the physically
+              accumulated coherent error so far, not just the raw circuit
+              features -- without this, the generator would have no
+              knowledge of the coherent error accumulated so far.
       Task 3: gate-conditioned prior p(delta_h_l | g_l) -- depends on g_l
               only (an MLP, no recurrence).
       Task 4: reparameterized sample delta_h_l = mu_l + sigma_l * eps.
@@ -278,8 +272,11 @@ class GenerativeCoherentBranch(nn.Module):
         super().__init__()
         self.hidden_dim = hidden_dim
 
-        # Task 2: recurrent posterior
-        self.rnn_cell = nn.GRUCell(feature_dim, hidden_dim)
+        # Task 2: recurrent posterior. Input is [x_l ; proj(Delta_H_{l-1})]
+        # (closed feedback loop, see forward()), so the GRU takes
+        # feature_dim + hidden_dim, not just feature_dim.
+        self.rnn_cell = nn.GRUCell(feature_dim + hidden_dim, hidden_dim)
+        self.coherent_proj = nn.Linear(hidden_dim, hidden_dim)  # projects Delta_H before feedback
         self.mu_head = nn.Linear(hidden_dim, hidden_dim)
         self.logvar_head = nn.Linear(hidden_dim, hidden_dim)
 
@@ -309,8 +306,12 @@ class GenerativeCoherentBranch(nn.Module):
             x_l = X[:, l, :]
             g_l = x_l  # gate-descriptor proxy (see class docstring)
 
-            # Task 2
-            h = self.rnn_cell(x_l, h)
+            # Task 2: closed physical feedback loop -- Delta_H here is still
+            # Delta_H_{l-1} (this step's accumulation happens below), so the
+            # generator sees exactly what physics has accumulated so far,
+            # not what it's about to generate.
+            gru_input = torch.cat([x_l, self.coherent_proj(Delta_H)], dim=-1)
+            h = self.rnn_cell(gru_input, h)
             mu_l = self.mu_head(h)
             logvar_l = self.logvar_head(h)
 

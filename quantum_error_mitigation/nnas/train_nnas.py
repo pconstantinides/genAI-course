@@ -17,7 +17,7 @@ import torch.nn as nn
 from coherent_noise_dataset import generate_coherent_dataset, CONDITIONS
 from model import NNASForQEM, DualStateNNASForQEM, PhysicsInformedNNASForQEM
 
-EPOCHS = 20
+EPOCHS = 30
 LR = 3e-3
 N_QUBITS = 4
 FIXED_L = 20
@@ -26,7 +26,7 @@ N_TEST = 80
 PARTIAL_TRAINING_RATE = 0.25
 BETA_KL = 1e-3       # Task 7 KL weight for the physics-informed model
 VAL_FRAC = 0.15      # held-out fraction for early stopping
-PATIENCE = 3         # epochs without validation improvement before stopping
+PATIENCE = 5         # epochs without validation improvement before stopping
 WEIGHT_DECAY = 1e-4   # L2 penalty, alongside gradient clipping
 N_SEEDS = 3
 BATCH_SIZE = 4        # kept small: larger batches converge to a worse plateau on 'drift'
