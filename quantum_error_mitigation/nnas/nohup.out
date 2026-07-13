@@ -160,3 +160,206 @@ Physics-Informed (generative)   +86.5% +/-  2.6%    -0.0% +/-  0.0%   +64.7% +/-
 
 Saved table to results_table.txt
 Saved plot to error_vs_depth_2.png
+
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed2.pt
+  Original NNAS     :  +88.8% +/-  2.3%  (deep-quartile  +84.6% +/-  4.5%)
+  Dual-State (full) : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_dual-state_full_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_dual-state_full_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_dual-state_full_seed2.pt
+  Dual-State (full) :  +90.7% +/-  1.4%  (deep-quartile  +88.5% +/-  2.5%)
+  Stochastic-only   : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_stochastic-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_stochastic-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_stochastic-only_seed2.pt
+  Stochastic-only   :  +88.8% +/-  2.3%  (deep-quartile  +84.6% +/-  4.5%)
+  Coherent-only     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_coherent-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_coherent-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_coherent-only_seed2.pt
+  Coherent-only     :  +92.3% +/-  0.4%  (deep-quartile  +91.5% +/-  0.5%)
+  Physics-Informed (generative): [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_physics-informed_generative_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_physics-informed_generative_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_physics-informed_generative_seed2.pt
+  Physics-Informed (generative):  +89.2% +/-  0.8%  (deep-quartile  +86.4% +/-  2.5%)
+
+=== coherent ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/coherent_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/coherent_test_5000_32.npy
+  Original NNAS     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_original_nnas_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_original_nnas_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_original_nnas_seed2.pt
+  Original NNAS     :   +2.1% +/-  2.6%  (deep-quartile   +2.1% +/-  2.5%)
+  Dual-State (full) : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_dual-state_full_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_dual-state_full_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_dual-state_full_seed2.pt
+  Dual-State (full) :   +8.5% +/-  0.9%  (deep-quartile   +9.2% +/-  1.8%)
+  Stochastic-only   : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_stochastic-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_stochastic-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_stochastic-only_seed2.pt
+  Stochastic-only   :   +2.1% +/-  2.6%  (deep-quartile   +2.1% +/-  2.5%)
+  Coherent-only     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_coherent-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_coherent-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_coherent-only_seed2.pt
+  Coherent-only     :   -0.5% +/-  0.8%  (deep-quartile   -0.4% +/-  0.5%)
+  Physics-Informed (generative): [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_physics-informed_generative_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_physics-informed_generative_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/coherent_physics-informed_generative_seed2.pt
+  Physics-Informed (generative):   +0.0% +/-  0.0%  (deep-quartile   -0.0% +/-  0.0%)
+
+=== mixed ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/mixed_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/mixed_test_5000_32.npy
+  Original NNAS     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_original_nnas_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_original_nnas_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_original_nnas_seed2.pt
+  Original NNAS     :  +66.6% +/-  0.9%  (deep-quartile  +63.3% +/-  1.4%)
+  Dual-State (full) : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_dual-state_full_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_dual-state_full_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_dual-state_full_seed2.pt
+  Dual-State (full) :  +70.9% +/-  0.7%  (deep-quartile  +69.3% +/-  1.4%)
+  Stochastic-only   : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_stochastic-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_stochastic-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_stochastic-only_seed2.pt
+  Stochastic-only   :  +66.6% +/-  0.9%  (deep-quartile  +63.3% +/-  1.4%)
+  Coherent-only     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_coherent-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_coherent-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_coherent-only_seed2.pt
+  Coherent-only     :  +71.8% +/-  0.2%  (deep-quartile  +69.4% +/-  0.2%)
+  Physics-Informed (generative): [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_physics-informed_generative_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_physics-informed_generative_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/mixed_physics-informed_generative_seed2.pt
+  Physics-Informed (generative):  +68.0% +/-  0.8%  (deep-quartile  +64.7% +/-  0.9%)
+
+=== drift ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/drift_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/drift_test_5000_32.npy
+  Original NNAS     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_original_nnas_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_original_nnas_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_original_nnas_seed2.pt
+  Original NNAS     :   +2.1% +/-  3.7%  (deep-quartile   +3.3% +/-  4.8%)
+  Dual-State (full) : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_dual-state_full_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_dual-state_full_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_dual-state_full_seed2.pt
+  Dual-State (full) :   +8.6% +/-  6.1%  (deep-quartile  +10.8% +/-  7.6%)
+  Stochastic-only   : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_stochastic-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_stochastic-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_stochastic-only_seed2.pt
+  Stochastic-only   :   +2.1% +/-  3.7%  (deep-quartile   +3.3% +/-  4.8%)
+  Coherent-only     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_coherent-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_coherent-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_coherent-only_seed2.pt
+  Coherent-only     :   +0.0% +/-  0.0%  (deep-quartile   +0.0% +/-  0.0%)
+  Physics-Informed (generative): [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_physics-informed_generative_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_physics-informed_generative_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/drift_physics-informed_generative_seed2.pt
+  Physics-Informed (generative):   +0.0% +/-  0.0%  (deep-quartile   +0.0% +/-  0.0%)
+
+Mean +/- std relative MAE improvement over noisy baseline (%), 3 seeds
+Architecture                    stochastic              coherent                 mixed                 drift
+------------------------------------------------------------------------------------------------------------
+Original NNAS          +88.8% +/-  2.3%    +2.1% +/-  2.6%   +66.6% +/-  0.9%    +2.1% +/-  3.7%
+Dual-State (full)      +90.7% +/-  1.4%    +8.5% +/-  0.9%   +70.9% +/-  0.7%    +8.6% +/-  6.1%
+Stochastic-only        +88.8% +/-  2.3%    +2.1% +/-  2.6%   +66.6% +/-  0.9%    +2.1% +/-  3.7%
+Coherent-only          +92.3% +/-  0.4%    -0.5% +/-  0.8%   +71.8% +/-  0.2%    +0.0% +/-  0.0%
+Physics-Informed (generative)   +89.2% +/-  0.8%    +0.0% +/-  0.0%   +68.0% +/-  0.8%    +0.0% +/-  0.0%
+
+Deepest-quartile-of-layers relative MAE improvement (%)
+Architecture                    stochastic              coherent                 mixed                 drift
+------------------------------------------------------------------------------------------------------------
+Original NNAS          +84.6% +/-  4.5%    +2.1% +/-  2.5%   +63.3% +/-  1.4%    +3.3% +/-  4.8%
+Dual-State (full)      +88.5% +/-  2.5%    +9.2% +/-  1.8%   +69.3% +/-  1.4%   +10.8% +/-  7.6%
+Stochastic-only        +84.6% +/-  4.5%    +2.1% +/-  2.5%   +63.3% +/-  1.4%    +3.3% +/-  4.8%
+Coherent-only          +91.5% +/-  0.5%    -0.4% +/-  0.5%   +69.4% +/-  0.2%    +0.0% +/-  0.0%
+Physics-Informed (generative)   +86.4% +/-  2.5%    -0.0% +/-  0.0%   +64.7% +/-  0.9%    +0.0% +/-  0.0%
+
+Saved table to results_table.txt
+Saved plot to error_vs_depth_2.png
+
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_original_nnas_seed2.pt
+  Original NNAS     :  +88.8% +/-  2.3%  (deep-quartile  +84.6% +/-  4.5%)
+  Dual-State (full) : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_dual-state_full_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_dual-state_full_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_dual-state_full_seed2.pt
+  Dual-State (full) :  +90.7% +/-  1.4%  (deep-quartile  +88.5% +/-  2.5%)
+  Stochastic-only   : [seed 0]     [seed 0] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_stochastic-only_seed0.pt
+[seed 1]     [seed 1] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_stochastic-only_seed1.pt
+[seed 2]     [seed 2] loaded existing model from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/models/stochastic_stochastic-only_seed2.pt
+  Stochastic-only   :  +88.8% +/-  2.3%  (deep-quartile  +84.6% +/-  4.5%)
+  Coherent-only     : [seed 0] 
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0] Training:   0%|          | 0/120 [00:00<?, ?it/s]Training:   1%|          | 1/120 [00:17<34:56, 17.62s/it]Training:   2%|▏         | 2/120 [00:35<34:34, 17.58s/it]Training:   2%|▎         | 3/120 [00:52<34:18, 17.59s/it]Training:   3%|▎         | 4/120 [01:10<34:02, 17.61s/it]Training:   4%|▍         | 5/120 [01:27<33:38, 17.56s/it]Training:   5%|▌         | 6/120 [01:45<33:23, 17.57s/it]Training:   6%|▌         | 7/120 [02:02<33:01, 17.54s/it]Training:   7%|▋         | 8/120 [02:20<32:45, 17.55s/it]Training:   8%|▊         | 9/120 [02:38<32:31, 17.58s/it]
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0] Training:   0%|          | 0/120 [00:00<?, ?it/s]Training:   1%|          | 1/120 [00:17<35:13, 17.76s/it]Training:   2%|▏         | 2/120 [00:35<34:46, 17.68s/it]Training:   2%|▎         | 3/120 [00:53<34:32, 17.71s/it]Training:   3%|▎         | 4/120 [01:10<34:15, 17.72s/it]Training:   4%|▍         | 5/120 [01:28<34:00, 17.74s/it]Training:   5%|▌         | 6/120 [01:46<33:44, 17.76s/it]
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :  +81.0% +/-  5.0%  (deep-quartile  +77.9% +/-  4.5%)
+  Dual-State (full) : [seed 0] 
+=== stochastic ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/stochastic_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :  +81.0% +/-  5.0%  (deep-quartile  +77.9% +/-  4.5%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :  +90.1% +/-  0.3%  (deep-quartile  +89.0% +/-  1.0%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :  +81.0% +/-  5.0%  (deep-quartile  +77.9% +/-  4.5%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :  +87.3% +/-  0.1%  (deep-quartile  +84.3% +/-  0.2%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):  +84.0% +/-  0.9%  (deep-quartile  +78.1% +/-  2.4%)
+
+=== coherent ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/coherent_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/coherent_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :   +5.7% +/-  0.6%  (deep-quartile   +7.1% +/-  1.1%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :   +5.2% +/-  1.2%  (deep-quartile   +6.3% +/-  1.8%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :   +5.7% +/-  0.6%  (deep-quartile   +7.1% +/-  1.1%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :   +3.7% +/-  0.6%  (deep-quartile   +4.2% +/-  1.0%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):   +3.8% +/-  2.3%  (deep-quartile   +5.2% +/-  3.5%)
+
+=== mixed ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/mixed_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/mixed_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :  +65.2% +/-  0.5%  (deep-quartile  +64.2% +/-  1.5%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :  +66.0% +/-  3.4%  (deep-quartile  +62.5% +/-  6.1%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :  +65.2% +/-  0.5%  (deep-quartile  +64.2% +/-  1.5%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :  +65.2% +/-  3.2%  (deep-quartile  +61.9% +/-  4.5%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):  +63.9% +/-  1.0%  (deep-quartile  +57.9% +/-  1.5%)
+
+=== drift ===
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/drift_train_20000_23.npy
+Loading existing dataset from /home/pconstant/Undergrad/genAI-course/quantum_error_mitigation/nnas/artifacts/datasets/drift_test_5000_32.npy
+  Original NNAS     : [seed 0] [seed 1] [seed 2]   Original NNAS     :   +1.7% +/-  8.2%  (deep-quartile   +0.5% +/- 11.9%)
+  Dual-State (full) : [seed 0] [seed 1] [seed 2]   Dual-State (full) :   +0.7% +/-  7.5%  (deep-quartile   -1.2% +/- 10.8%)
+  Stochastic-only   : [seed 0] [seed 1] [seed 2]   Stochastic-only   :   +1.7% +/-  8.2%  (deep-quartile   +0.5% +/- 11.9%)
+  Coherent-only     : [seed 0] [seed 1] [seed 2]   Coherent-only     :   +3.1% +/-  4.6%  (deep-quartile   +1.7% +/-  7.6%)
+  Physics-Informed (generative): [seed 0] [seed 1] [seed 2]   Physics-Informed (generative):   -3.3% +/-  7.4%  (deep-quartile   -6.9% +/- 10.1%)
+
+Mean +/- std relative MAE improvement over noisy baseline (%), 3 seeds
+Architecture                    stochastic              coherent                 mixed                 drift
+------------------------------------------------------------------------------------------------------------
+Original NNAS          +81.0% +/-  5.0%    +5.7% +/-  0.6%   +65.2% +/-  0.5%    +1.7% +/-  8.2%
+Dual-State (full)      +90.1% +/-  0.3%    +5.2% +/-  1.2%   +66.0% +/-  3.4%    +0.7% +/-  7.5%
+Stochastic-only        +81.0% +/-  5.0%    +5.7% +/-  0.6%   +65.2% +/-  0.5%    +1.7% +/-  8.2%
+Coherent-only          +87.3% +/-  0.1%    +3.7% +/-  0.6%   +65.2% +/-  3.2%    +3.1% +/-  4.6%
+Physics-Informed (generative)   +84.0% +/-  0.9%    +3.8% +/-  2.3%   +63.9% +/-  1.0%    -3.3% +/-  7.4%
+
+Deepest-quartile-of-layers relative MAE improvement (%)
+Architecture                    stochastic              coherent                 mixed                 drift
+------------------------------------------------------------------------------------------------------------
+Original NNAS          +77.9% +/-  4.5%    +7.1% +/-  1.1%   +64.2% +/-  1.5%    +0.5% +/- 11.9%
+Dual-State (full)      +89.0% +/-  1.0%    +6.3% +/-  1.8%   +62.5% +/-  6.1%    -1.2% +/- 10.8%
+Stochastic-only        +77.9% +/-  4.5%    +7.1% +/-  1.1%   +64.2% +/-  1.5%    +0.5% +/- 11.9%
+Coherent-only          +84.3% +/-  0.2%    +4.2% +/-  1.0%   +61.9% +/-  4.5%    +1.7% +/-  7.6%
+Physics-Informed (generative)   +78.1% +/-  2.4%    +5.2% +/-  3.5%   +57.9% +/-  1.5%    -6.9% +/- 10.1%
+
+Saved table to results_table.txt
+Saved plot to error_vs_depth_3.png
